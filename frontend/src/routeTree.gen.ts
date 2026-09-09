@@ -16,6 +16,8 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
+import { Route as LayoutCuppingsRouteImport } from './routes/_layout/cuppings'
+import { Route as LayoutInventoryUpdateRouteImport } from './routes/_layout/inventory-update'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 
@@ -53,6 +55,16 @@ const LayoutAdminRoute = LayoutAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutCuppingsRoute = LayoutCuppingsRouteImport.update({
+  id: '/cuppings',
+  path: '/cuppings',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutInventoryUpdateRoute = LayoutInventoryUpdateRouteImport.update({
+  id: '/inventory-update',
+  path: '/inventory-update',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutItemsRoute = LayoutItemsRouteImport.update({
   id: '/items',
   path: '/items',
@@ -71,6 +83,8 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/cuppings': typeof LayoutCuppingsRoute
+  '/inventory-update': typeof LayoutInventoryUpdateRoute
   '/items': typeof LayoutItemsRoute
   '/settings': typeof LayoutSettingsRoute
 }
@@ -80,6 +94,8 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/cuppings': typeof LayoutCuppingsRoute
+  '/inventory-update': typeof LayoutInventoryUpdateRoute
   '/items': typeof LayoutItemsRoute
   '/settings': typeof LayoutSettingsRoute
   '/': typeof LayoutIndexRoute
@@ -92,6 +108,8 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_layout/admin': typeof LayoutAdminRoute
+  '/_layout/cuppings': typeof LayoutCuppingsRoute
+  '/_layout/inventory-update': typeof LayoutInventoryUpdateRoute
   '/_layout/items': typeof LayoutItemsRoute
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/': typeof LayoutIndexRoute
@@ -105,6 +123,8 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/cuppings'
+    | '/inventory-update'
     | '/items'
     | '/settings'
   fileRoutesByTo: FileRoutesByTo
@@ -114,6 +134,8 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/cuppings'
+    | '/inventory-update'
     | '/items'
     | '/settings'
     | '/'
@@ -125,6 +147,8 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/_layout/admin'
+    | '/_layout/cuppings'
+    | '/_layout/inventory-update'
     | '/_layout/items'
     | '/_layout/settings'
     | '/_layout/'
@@ -189,6 +213,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/cuppings': {
+      id: '/_layout/cuppings'
+      path: '/cuppings'
+      fullPath: '/cuppings'
+      preLoaderRoute: typeof LayoutCuppingsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/inventory-update': {
+      id: '/_layout/inventory-update'
+      path: '/inventory-update'
+      fullPath: '/inventory-update'
+      preLoaderRoute: typeof LayoutInventoryUpdateRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/items': {
       id: '/_layout/items'
       path: '/items'
@@ -208,6 +246,8 @@ declare module '@tanstack/react-router' {
 
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
+  LayoutCuppingsRoute: typeof LayoutCuppingsRoute
+  LayoutInventoryUpdateRoute: typeof LayoutInventoryUpdateRoute
   LayoutItemsRoute: typeof LayoutItemsRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
@@ -215,6 +255,8 @@ interface LayoutRouteChildren {
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRoute,
+  LayoutCuppingsRoute: LayoutCuppingsRoute,
+  LayoutInventoryUpdateRoute: LayoutInventoryUpdateRoute,
   LayoutItemsRoute: LayoutItemsRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutIndexRoute: LayoutIndexRoute,

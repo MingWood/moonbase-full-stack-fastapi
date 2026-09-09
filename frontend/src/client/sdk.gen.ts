@@ -2,7 +2,7 @@
 
 import { type Client, type Options as Options2, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { itemsCreateItemData, itemsCreateItemErrors, itemsCreateItemResponses, itemsDeleteItemData, itemsDeleteItemErrors, itemsDeleteItemResponses, itemsReadItemData, itemsReadItemErrors, itemsReadItemResponses, itemsReadItemsData, itemsReadItemsErrors, itemsReadItemsResponses, itemsUpdateItemData, itemsUpdateItemErrors, itemsUpdateItemResponses, loginLoginAccessTokenData, loginLoginAccessTokenErrors, loginLoginAccessTokenResponses, loginRecoverPasswordData, loginRecoverPasswordErrors, loginRecoverPasswordHtmlContentData, loginRecoverPasswordHtmlContentErrors, loginRecoverPasswordHtmlContentResponses, loginRecoverPasswordResponses, loginResetPasswordData, loginResetPasswordErrors, loginResetPasswordResponses, loginTestTokenData, loginTestTokenResponses, privateCreateUserData, privateCreateUserErrors, privateCreateUserResponses, usersCreateUserData, usersCreateUserErrors, usersCreateUserResponses, usersDeleteUserData, usersDeleteUserErrors, usersDeleteUserMeData, usersDeleteUserMeResponses, usersDeleteUserResponses, usersReadUserByIdData, usersReadUserByIdErrors, usersReadUserByIdResponses, usersReadUserMeData, usersReadUserMeResponses, usersReadUsersData, usersReadUsersErrors, usersReadUsersResponses, usersRegisterUserData, usersRegisterUserErrors, usersRegisterUserResponses, usersUpdatePasswordMeData, usersUpdatePasswordMeErrors, usersUpdatePasswordMeResponses, usersUpdateUserData, usersUpdateUserErrors, usersUpdateUserMeData, usersUpdateUserMeErrors, usersUpdateUserMeResponses, usersUpdateUserResponses, utilsHealthCheckData, utilsHealthCheckResponses, utilsTestEmailData, utilsTestEmailErrors, utilsTestEmailResponses } from './types.gen';
+import type { cuppingsCreateCuppingData, cuppingsCreateCuppingErrors, cuppingsCreateCuppingResponses, cuppingsReadCuppingData, cuppingsReadCuppingErrors, cuppingsReadCuppingResponses, cuppingsReadCuppingsData, cuppingsReadCuppingsErrors, cuppingsReadCuppingsResponses, cuppingsUpdateCuppingData, cuppingsUpdateCuppingErrors, cuppingsUpdateCuppingResponses, inventoryBulkAdjustInventoryData, inventoryBulkAdjustInventoryErrors, inventoryBulkAdjustInventoryResponses, inventoryCreateInventoryItemData, inventoryCreateInventoryItemErrors, inventoryCreateInventoryItemResponses, inventoryDeleteInventoryItemData, inventoryDeleteInventoryItemErrors, inventoryDeleteInventoryItemResponses, inventoryReadInventoryItemData, inventoryReadInventoryItemErrors, inventoryReadInventoryItemResponses, inventoryReadInventoryItemsData, inventoryReadInventoryItemsErrors, inventoryReadInventoryItemsResponses, inventoryUpdateInventoryItemData, inventoryUpdateInventoryItemErrors, inventoryUpdateInventoryItemResponses, itemsCreateItemData, itemsCreateItemErrors, itemsCreateItemResponses, itemsDeleteItemData, itemsDeleteItemErrors, itemsDeleteItemResponses, itemsReadItemData, itemsReadItemErrors, itemsReadItemResponses, itemsReadItemsData, itemsReadItemsErrors, itemsReadItemsResponses, itemsUpdateItemData, itemsUpdateItemErrors, itemsUpdateItemResponses, loginLoginAccessTokenData, loginLoginAccessTokenErrors, loginLoginAccessTokenResponses, loginRecoverPasswordData, loginRecoverPasswordErrors, loginRecoverPasswordHtmlContentData, loginRecoverPasswordHtmlContentErrors, loginRecoverPasswordHtmlContentResponses, loginRecoverPasswordResponses, loginResetPasswordData, loginResetPasswordErrors, loginResetPasswordResponses, loginTestTokenData, loginTestTokenResponses, privateCreateUserData, privateCreateUserErrors, privateCreateUserResponses, usersCreateUserData, usersCreateUserErrors, usersCreateUserResponses, usersDeleteUserData, usersDeleteUserErrors, usersDeleteUserMeData, usersDeleteUserMeResponses, usersDeleteUserResponses, usersReadUserByIdData, usersReadUserByIdErrors, usersReadUserByIdResponses, usersReadUserMeData, usersReadUserMeResponses, usersReadUsersData, usersReadUsersErrors, usersReadUsersResponses, usersRegisterUserData, usersRegisterUserErrors, usersRegisterUserResponses, usersUpdatePasswordMeData, usersUpdatePasswordMeErrors, usersUpdatePasswordMeResponses, usersUpdateUserData, usersUpdateUserErrors, usersUpdateUserMeData, usersUpdateUserMeErrors, usersUpdateUserMeResponses, usersUpdateUserResponses, utilsHealthCheckData, utilsHealthCheckResponses, utilsTestEmailData, utilsTestEmailErrors, utilsTestEmailResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -22,7 +22,10 @@ export class LoginService {
     /**
      * Login Access Token
      *
-     * OAuth2 compatible token login, get an access token for future requests
+     * Basic auth: username/password are checked against the configured
+     * ADMIN_USERNAME/ADMIN_PASSWORD rather than a per-user DB lookup. On
+     * success, the JWT subject is the seeded superuser's id (from
+     * FIRST_SUPERUSER) so downstream `CurrentUser`-dependent routes keep working.
      */
     public static loginAccessToken<ThrowOnError extends boolean = true>(options: Options<loginLoginAccessTokenData, ThrowOnError>) {
         return (options.client ?? client).post<loginLoginAccessTokenResponses, loginLoginAccessTokenErrors, ThrowOnError>({
@@ -355,6 +358,175 @@ export class ItemsService {
             responseType: 'json',
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/v1/items/{id}',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+}
+
+export class InventoryService {
+    /**
+     * Read Inventory Items
+     *
+     * Retrieve inventory items, optionally filtered by a name search (`q`).
+     */
+    public static readInventoryItems<ThrowOnError extends boolean = true>(options?: Options<inventoryReadInventoryItemsData, ThrowOnError>) {
+        return (options?.client ?? client).get<inventoryReadInventoryItemsResponses, inventoryReadInventoryItemsErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/inventory/',
+            ...options
+        });
+    }
+    
+    /**
+     * Create Inventory Item
+     *
+     * Create a new inventory item. If it starts with stock on hand, an initial
+     * "addition" ledger entry is written alongside it.
+     */
+    public static createInventoryItem<ThrowOnError extends boolean = true>(options: Options<inventoryCreateInventoryItemData, ThrowOnError>) {
+        return (options.client ?? client).post<inventoryCreateInventoryItemResponses, inventoryCreateInventoryItemErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/inventory/',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Delete Inventory Item
+     *
+     * Delete an inventory item. Its ledger history is kept for the record
+     * (inventory_item_id is set to NULL on those rows, not deleted).
+     */
+    public static deleteInventoryItem<ThrowOnError extends boolean = true>(options: Options<inventoryDeleteInventoryItemData, ThrowOnError>) {
+        return (options.client ?? client).delete<inventoryDeleteInventoryItemResponses, inventoryDeleteInventoryItemErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/inventory/{id}',
+            ...options
+        });
+    }
+    
+    /**
+     * Read Inventory Item
+     *
+     * Get an inventory item by ID.
+     */
+    public static readInventoryItem<ThrowOnError extends boolean = true>(options: Options<inventoryReadInventoryItemData, ThrowOnError>) {
+        return (options.client ?? client).get<inventoryReadInventoryItemResponses, inventoryReadInventoryItemErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/inventory/{id}',
+            ...options
+        });
+    }
+    
+    /**
+     * Update Inventory Item
+     *
+     * Update an inventory item's fields. If `current_qty` differs from the
+     * stored value, the delta is recorded as an "adjustment" ledger entry.
+     * Metadata-only edits do not touch the ledger.
+     */
+    public static updateInventoryItem<ThrowOnError extends boolean = true>(options: Options<inventoryUpdateInventoryItemData, ThrowOnError>) {
+        return (options.client ?? client).put<inventoryUpdateInventoryItemResponses, inventoryUpdateInventoryItemErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/inventory/{id}',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Bulk Adjust Inventory
+     *
+     * Apply a batch of additions/subtractions atomically: either all
+     * adjustments succeed, or none are applied.
+     */
+    public static bulkAdjustInventory<ThrowOnError extends boolean = true>(options: Options<inventoryBulkAdjustInventoryData, ThrowOnError>) {
+        return (options.client ?? client).post<inventoryBulkAdjustInventoryResponses, inventoryBulkAdjustInventoryErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/inventory/bulk-adjust',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+}
+
+export class CuppingsService {
+    /**
+     * Read Cuppings
+     *
+     * Retrieve cuppings, oldest first, optionally filtered to a date range.
+     */
+    public static readCuppings<ThrowOnError extends boolean = true>(options?: Options<cuppingsReadCuppingsData, ThrowOnError>) {
+        return (options?.client ?? client).get<cuppingsReadCuppingsResponses, cuppingsReadCuppingsErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/cuppings/',
+            ...options
+        });
+    }
+    
+    /**
+     * Create Cupping
+     *
+     * Create a new cupping. `date` and `who_tasted` are set server-side.
+     */
+    public static createCupping<ThrowOnError extends boolean = true>(options: Options<cuppingsCreateCuppingData, ThrowOnError>) {
+        return (options.client ?? client).post<cuppingsCreateCuppingResponses, cuppingsCreateCuppingErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/cuppings/',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Read Cupping
+     *
+     * Get a cupping by ID.
+     */
+    public static readCupping<ThrowOnError extends boolean = true>(options: Options<cuppingsReadCuppingData, ThrowOnError>) {
+        return (options.client ?? client).get<cuppingsReadCuppingResponses, cuppingsReadCuppingErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/cuppings/{id}',
+            ...options
+        });
+    }
+    
+    /**
+     * Update Cupping
+     *
+     * Update a cupping's fields. `date` and `who_tasted` are immutable.
+     */
+    public static updateCupping<ThrowOnError extends boolean = true>(options: Options<cuppingsUpdateCuppingData, ThrowOnError>) {
+        return (options.client ?? client).put<cuppingsUpdateCuppingResponses, cuppingsUpdateCuppingErrors, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/cuppings/{id}',
             ...options,
             headers: {
                 'Content-Type': 'application/json',

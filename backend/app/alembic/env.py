@@ -2,7 +2,7 @@ import os
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import engine_from_config, event, pool
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -21,6 +21,7 @@ fileConfig(config.config_file_name)
 
 from app.models import SQLModel  # noqa
 from app.core.config import settings # noqa
+from app.core.db import generate_aurora_auth_token  # noqa
 
 target_metadata = SQLModel.metadata
 
@@ -70,6 +71,10 @@ def run_migrations_online():
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
+
+    @event.listens_for(connectable, "do_connect")
+    def _provide_aurora_token(dialect, conn_rec, cargs, cparams):
+        cparams["password"] = generate_aurora_auth_token()
 
     with connectable.connect() as connection:
         context.configure(

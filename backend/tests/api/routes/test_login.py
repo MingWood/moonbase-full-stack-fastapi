@@ -4,19 +4,19 @@ from fastapi.testclient import TestClient
 from pwdlib.hashers.bcrypt import BcryptHasher
 from sqlmodel import Session
 
+from app import crud
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
 from app.crud import create_user
 from app.models import User, UserCreate
 from app.utils import generate_password_reset_token
-from tests.utils.user import user_authentication_headers
 from tests.utils.utils import random_email, random_lower_string
 
 
 def test_get_access_token(client: TestClient) -> None:
     login_data = {
-        "username": settings.FIRST_SUPERUSER,
-        "password": settings.FIRST_SUPERUSER_PASSWORD,
+        "username": settings.ADMIN_USERNAME,
+        "password": settings.ADMIN_PASSWORD,
     }
     r = client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
     tokens = r.json()
@@ -27,7 +27,7 @@ def test_get_access_token(client: TestClient) -> None:
 
 def test_get_access_token_incorrect_password(client: TestClient) -> None:
     login_data = {
-        "username": settings.FIRST_SUPERUSER,
+        "username": settings.ADMIN_USERNAME,
         "password": "incorrect",
     }
     r = client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
@@ -93,12 +93,12 @@ def test_reset_password(client: TestClient, db: Session) -> None:
     )
     user = create_user(session=db, user_create=user_create)
     token = generate_password_reset_token(email=email)
-    headers = user_authentication_headers(client=client, email=email, password=password)
     data = {"new_password": new_password, "token": token}
 
+    # /reset-password/ doesn't require auth (it's the token, not a session,
+    # that authorizes the change), so no login is needed here.
     r = client.post(
         f"{settings.API_V1_STR}/reset-password/",
-        headers=headers,
         json=data,
     )
 
@@ -126,10 +126,14 @@ def test_reset_password_invalid_token(
     assert response["detail"] == "Invalid token"
 
 
-def test_login_with_bcrypt_password_upgrades_to_argon2(
-    client: TestClient, db: Session
-) -> None:
-    """Test that logging in with a bcrypt password hash upgrades it to argon2."""
+# NOTE: these two exercise crud.authenticate() directly rather than through
+# POST /login/access-token, since that endpoint now only accepts the
+# hardcoded ADMIN_USERNAME/ADMIN_PASSWORD pair (see login.py) and no longer
+# authenticates arbitrary DB users. The hash-upgrade-on-verify behavior they
+# cover still lives in crud.authenticate/verify_password, so it's still
+# worth covering even though it's unreachable via the primary login route.
+def test_login_with_bcrypt_password_upgrades_to_argon2(db: Session) -> None:
+    """Test that authenticating with a bcrypt password hash upgrades it to argon2."""
     email = random_email()
     password = random_lower_string()
 
@@ -145,11 +149,8 @@ def test_login_with_bcrypt_password_upgrades_to_argon2(
 
     assert user.hashed_password.startswith("$2")
 
-    login_data = {"username": email, "password": password}
-    r = client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
-    assert r.status_code == 200
-    tokens = r.json()
-    assert "access_token" in tokens
+    authenticated = crud.authenticate(session=db, email=email, password=password)
+    assert authenticated is not None
 
     db.refresh(user)
 
@@ -162,8 +163,8 @@ def test_login_with_bcrypt_password_upgrades_to_argon2(
     assert updated_hash is None
 
 
-def test_login_with_argon2_password_keeps_hash(client: TestClient, db: Session) -> None:
-    """Test that logging in with an argon2 password hash does not update it."""
+def test_login_with_argon2_password_keeps_hash(db: Session) -> None:
+    """Test that authenticating with an argon2 password hash does not update it."""
     email = random_email()
     password = random_lower_string()
 
@@ -179,11 +180,8 @@ def test_login_with_argon2_password_keeps_hash(client: TestClient, db: Session) 
 
     original_hash = user.hashed_password
 
-    login_data = {"username": email, "password": password}
-    r = client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
-    assert r.status_code == 200
-    tokens = r.json()
-    assert "access_token" in tokens
+    authenticated = crud.authenticate(session=db, email=email, password=password)
+    assert authenticated is not None
 
     db.refresh(user)
 

@@ -23,13 +23,6 @@ services:
       - --api
       # Enable the Dashboard and API in insecure mode for local development
       - --api.insecure=true
-  db:
-    ports:
-      - "5432:5432"
-
-  adminer:
-    ports:
-      - "8080:8080"
 
   backend:
     ports:
@@ -62,6 +55,7 @@ services:
     # TODO: remove once coverage is done locally
     volumes:
       - ./backend/htmlcov:/app/backend/htmlcov
+      - ${HOME}/.aws:/root/.aws:ro
     environment:
       FASTAPI_ENV: "development"
       SMTP_HOST: "mailpit"

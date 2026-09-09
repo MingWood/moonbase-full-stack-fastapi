@@ -1,0 +1,14 @@
+Add a table called cuppings with these columns:
+"id	date	roast_id	roasting_machine	fragrance_score	aroma_score	taste_score	aftertaste_score	notes	who_tasted	brew_style	order_id	manual_name	buy_decision"
+
+Add a new tab in the sidebar for a "cuppings" view that is mobile prioritized. It should have a frozen header that shows a date range selector on the left that shows a start and end date and time, and a "Add" button on the right.
+- Clicking the date range should open a date and time range selector.
+- Clicking the "Add" button should open a modal for an AddCoffee component which lists out entrys (with notable details) for order_id(plus and minus icon to quickly increment this integer), roast_id (integer), roasting_machine (a slider to pick between 3 fixed options "sagvag", "hq_loring", "na_robert"),
+brew_style (a slider to pick between 3 fixed options "brew", "cupping", "spro"),  manual_name (mark as optional), fragrance_score	,aroma_score	,taste_score	aftertaste_score,	notes (a big freeform text section)
+- A submit button should be frozen up top of this modal at all times
+- onsubmit this should add a row to the cuppings table and show up as one long clickable row in the main area of this tab
+- adding more entries will show up appended vertically to the bottom of this list
+- clicking the row should open this modal and allow edits to be added to the row which updates the database
+- who_tasted should be the logged in user, date should be the date and time when the row was created
+- each row entry should be styled with the order_id on the left, roast_id and nickname next (use default text "nickname" for now), and the four score values on the right with vertical lines dividing each section
+- the date range selection at top of the page should filter what cupping rows get shown

@@ -35,6 +35,169 @@ export type Body_login_login_access_token = {
 };
 
 /**
+ * BrewStyle
+ */
+export type BrewStyle = 'brew' | 'cupping' | 'spro';
+
+/**
+ * CuppingCreate
+ */
+export type CuppingCreate = {
+    /**
+     * Roast Id
+     */
+    roast_id: number;
+    roasting_machine: RoastingMachine;
+    brew_style: BrewStyle;
+    /**
+     * Order Id
+     */
+    order_id: number;
+    /**
+     * Manual Name
+     */
+    manual_name?: string | null;
+    /**
+     * Fragrance Score
+     */
+    fragrance_score: number;
+    /**
+     * Aroma Score
+     */
+    aroma_score: number;
+    /**
+     * Taste Score
+     */
+    taste_score: number;
+    /**
+     * Aftertaste Score
+     */
+    aftertaste_score: number;
+    /**
+     * Notes
+     */
+    notes?: string | null;
+    /**
+     * Buy Decision
+     */
+    buy_decision?: boolean | null;
+};
+
+/**
+ * CuppingPublic
+ */
+export type CuppingPublic = {
+    /**
+     * Roast Id
+     */
+    roast_id: number;
+    roasting_machine: RoastingMachine;
+    brew_style: BrewStyle;
+    /**
+     * Order Id
+     */
+    order_id: number;
+    /**
+     * Manual Name
+     */
+    manual_name?: string | null;
+    /**
+     * Fragrance Score
+     */
+    fragrance_score: number;
+    /**
+     * Aroma Score
+     */
+    aroma_score: number;
+    /**
+     * Taste Score
+     */
+    taste_score: number;
+    /**
+     * Aftertaste Score
+     */
+    aftertaste_score: number;
+    /**
+     * Notes
+     */
+    notes?: string | null;
+    /**
+     * Buy Decision
+     */
+    buy_decision?: boolean | null;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Date
+     */
+    date: number;
+    /**
+     * Who Tasted
+     */
+    who_tasted: string;
+};
+
+/**
+ * CuppingUpdate
+ */
+export type CuppingUpdate = {
+    /**
+     * Roast Id
+     */
+    roast_id?: number | null;
+    roasting_machine?: RoastingMachine | null;
+    brew_style?: BrewStyle | null;
+    /**
+     * Order Id
+     */
+    order_id?: number | null;
+    /**
+     * Manual Name
+     */
+    manual_name?: string | null;
+    /**
+     * Fragrance Score
+     */
+    fragrance_score?: number | null;
+    /**
+     * Aroma Score
+     */
+    aroma_score?: number | null;
+    /**
+     * Taste Score
+     */
+    taste_score?: number | null;
+    /**
+     * Aftertaste Score
+     */
+    aftertaste_score?: number | null;
+    /**
+     * Notes
+     */
+    notes?: string | null;
+    /**
+     * Buy Decision
+     */
+    buy_decision?: boolean | null;
+};
+
+/**
+ * CuppingsPublic
+ */
+export type CuppingsPublic = {
+    /**
+     * Data
+     */
+    data: Array<CuppingPublic>;
+    /**
+     * Count
+     */
+    count: number;
+};
+
+/**
  * HTTPValidationError
  */
 export type HTTPValidationError = {
@@ -43,6 +206,179 @@ export type HTTPValidationError = {
      */
     detail?: Array<ValidationError>;
 };
+
+/**
+ * InventoryAdjustmentIn
+ */
+export type InventoryAdjustmentIn = {
+    /**
+     * Inventory Item Id
+     */
+    inventory_item_id: string;
+    change_type?: LedgerChangeType;
+    /**
+     * Quantity
+     */
+    quantity: number;
+    /**
+     * Note
+     */
+    note?: string | null;
+};
+
+/**
+ * InventoryBulkAdjustIn
+ */
+export type InventoryBulkAdjustIn = {
+    /**
+     * Adjustments
+     */
+    adjustments: Array<InventoryAdjustmentIn>;
+};
+
+/**
+ * InventoryCategory
+ */
+export type InventoryCategory = 'green_coffee' | 'roasted_coffee' | 'packaging' | 'supplies' | 'clothing' | 'merch' | 'glassware' | 'boh_ingredients' | 'to_go_serveware' | 'other';
+
+/**
+ * InventoryItemCreate
+ */
+export type InventoryItemCreate = {
+    /**
+     * Name
+     */
+    name: string;
+    category: InventoryCategory;
+    unit: InventoryUnit;
+    /**
+     * Current Qty
+     */
+    current_qty: number;
+    /**
+     * Reorder Threshold
+     */
+    reorder_threshold?: number | null;
+    /**
+     * Supplier
+     */
+    supplier?: string | null;
+    /**
+     * Notes
+     */
+    notes?: string | null;
+    /**
+     * Location
+     */
+    location?: string | null;
+    /**
+     * Address
+     */
+    address?: string | null;
+};
+
+/**
+ * InventoryItemPublic
+ */
+export type InventoryItemPublic = {
+    /**
+     * Name
+     */
+    name: string;
+    category: InventoryCategory;
+    unit: InventoryUnit;
+    /**
+     * Current Qty
+     */
+    current_qty: number;
+    /**
+     * Reorder Threshold
+     */
+    reorder_threshold?: number | null;
+    /**
+     * Supplier
+     */
+    supplier?: string | null;
+    /**
+     * Notes
+     */
+    notes?: string | null;
+    /**
+     * Location
+     */
+    location?: string | null;
+    /**
+     * Address
+     */
+    address?: string | null;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Created At Ms
+     */
+    created_at_ms: number;
+    /**
+     * Last Updated Ms
+     */
+    last_updated_ms: number;
+};
+
+/**
+ * InventoryItemUpdate
+ */
+export type InventoryItemUpdate = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    category?: InventoryCategory | null;
+    unit?: InventoryUnit | null;
+    /**
+     * Current Qty
+     */
+    current_qty?: number | null;
+    /**
+     * Reorder Threshold
+     */
+    reorder_threshold?: number | null;
+    /**
+     * Supplier
+     */
+    supplier?: string | null;
+    /**
+     * Notes
+     */
+    notes?: string | null;
+    /**
+     * Location
+     */
+    location?: string | null;
+    /**
+     * Address
+     */
+    address?: string | null;
+};
+
+/**
+ * InventoryItemsPublic
+ */
+export type InventoryItemsPublic = {
+    /**
+     * Data
+     */
+    data: Array<InventoryItemPublic>;
+    /**
+     * Count
+     */
+    count: number;
+};
+
+/**
+ * InventoryUnit
+ */
+export type InventoryUnit = 'lbs' | 'kg' | 'bags' | 'units' | 'boxes' | 'bottles';
 
 /**
  * ItemCreate
@@ -113,6 +449,11 @@ export type ItemsPublic = {
 };
 
 /**
+ * LedgerChangeType
+ */
+export type LedgerChangeType = 'addition' | 'subtraction' | 'adjustment';
+
+/**
  * Message
  */
 export type Message = {
@@ -157,6 +498,11 @@ export type PrivateUserCreate = {
      */
     is_verified?: boolean;
 };
+
+/**
+ * RoastingMachine
+ */
+export type RoastingMachine = 'sagvag' | 'hq_loring' | 'na_robert';
 
 /**
  * Token
@@ -920,6 +1266,311 @@ export type itemsUpdateItemResponses = {
 };
 
 export type itemsUpdateItemResponse = itemsUpdateItemResponses[keyof itemsUpdateItemResponses];
+
+export type inventoryReadInventoryItemsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Q
+         */
+        q?: string | null;
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/inventory/';
+};
+
+export type inventoryReadInventoryItemsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type inventoryReadInventoryItemsError = inventoryReadInventoryItemsErrors[keyof inventoryReadInventoryItemsErrors];
+
+export type inventoryReadInventoryItemsResponses = {
+    /**
+     * Successful Response
+     */
+    200: InventoryItemsPublic;
+};
+
+export type inventoryReadInventoryItemsResponse = inventoryReadInventoryItemsResponses[keyof inventoryReadInventoryItemsResponses];
+
+export type inventoryCreateInventoryItemData = {
+    body: InventoryItemCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/inventory/';
+};
+
+export type inventoryCreateInventoryItemErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type inventoryCreateInventoryItemError = inventoryCreateInventoryItemErrors[keyof inventoryCreateInventoryItemErrors];
+
+export type inventoryCreateInventoryItemResponses = {
+    /**
+     * Successful Response
+     */
+    200: InventoryItemPublic;
+};
+
+export type inventoryCreateInventoryItemResponse = inventoryCreateInventoryItemResponses[keyof inventoryCreateInventoryItemResponses];
+
+export type inventoryDeleteInventoryItemData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/inventory/{id}';
+};
+
+export type inventoryDeleteInventoryItemErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type inventoryDeleteInventoryItemError = inventoryDeleteInventoryItemErrors[keyof inventoryDeleteInventoryItemErrors];
+
+export type inventoryDeleteInventoryItemResponses = {
+    /**
+     * Successful Response
+     */
+    200: Message;
+};
+
+export type inventoryDeleteInventoryItemResponse = inventoryDeleteInventoryItemResponses[keyof inventoryDeleteInventoryItemResponses];
+
+export type inventoryReadInventoryItemData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/inventory/{id}';
+};
+
+export type inventoryReadInventoryItemErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type inventoryReadInventoryItemError = inventoryReadInventoryItemErrors[keyof inventoryReadInventoryItemErrors];
+
+export type inventoryReadInventoryItemResponses = {
+    /**
+     * Successful Response
+     */
+    200: InventoryItemPublic;
+};
+
+export type inventoryReadInventoryItemResponse = inventoryReadInventoryItemResponses[keyof inventoryReadInventoryItemResponses];
+
+export type inventoryUpdateInventoryItemData = {
+    body: InventoryItemUpdate;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/inventory/{id}';
+};
+
+export type inventoryUpdateInventoryItemErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type inventoryUpdateInventoryItemError = inventoryUpdateInventoryItemErrors[keyof inventoryUpdateInventoryItemErrors];
+
+export type inventoryUpdateInventoryItemResponses = {
+    /**
+     * Successful Response
+     */
+    200: InventoryItemPublic;
+};
+
+export type inventoryUpdateInventoryItemResponse = inventoryUpdateInventoryItemResponses[keyof inventoryUpdateInventoryItemResponses];
+
+export type inventoryBulkAdjustInventoryData = {
+    body: InventoryBulkAdjustIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/inventory/bulk-adjust';
+};
+
+export type inventoryBulkAdjustInventoryErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type inventoryBulkAdjustInventoryError = inventoryBulkAdjustInventoryErrors[keyof inventoryBulkAdjustInventoryErrors];
+
+export type inventoryBulkAdjustInventoryResponses = {
+    /**
+     * Successful Response
+     */
+    200: InventoryItemsPublic;
+};
+
+export type inventoryBulkAdjustInventoryResponse = inventoryBulkAdjustInventoryResponses[keyof inventoryBulkAdjustInventoryResponses];
+
+export type cuppingsReadCuppingsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Start Ms
+         */
+        start_ms?: number | null;
+        /**
+         * End Ms
+         */
+        end_ms?: number | null;
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/cuppings/';
+};
+
+export type cuppingsReadCuppingsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type cuppingsReadCuppingsError = cuppingsReadCuppingsErrors[keyof cuppingsReadCuppingsErrors];
+
+export type cuppingsReadCuppingsResponses = {
+    /**
+     * Successful Response
+     */
+    200: CuppingsPublic;
+};
+
+export type cuppingsReadCuppingsResponse = cuppingsReadCuppingsResponses[keyof cuppingsReadCuppingsResponses];
+
+export type cuppingsCreateCuppingData = {
+    body: CuppingCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/cuppings/';
+};
+
+export type cuppingsCreateCuppingErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type cuppingsCreateCuppingError = cuppingsCreateCuppingErrors[keyof cuppingsCreateCuppingErrors];
+
+export type cuppingsCreateCuppingResponses = {
+    /**
+     * Successful Response
+     */
+    200: CuppingPublic;
+};
+
+export type cuppingsCreateCuppingResponse = cuppingsCreateCuppingResponses[keyof cuppingsCreateCuppingResponses];
+
+export type cuppingsReadCuppingData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/cuppings/{id}';
+};
+
+export type cuppingsReadCuppingErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type cuppingsReadCuppingError = cuppingsReadCuppingErrors[keyof cuppingsReadCuppingErrors];
+
+export type cuppingsReadCuppingResponses = {
+    /**
+     * Successful Response
+     */
+    200: CuppingPublic;
+};
+
+export type cuppingsReadCuppingResponse = cuppingsReadCuppingResponses[keyof cuppingsReadCuppingResponses];
+
+export type cuppingsUpdateCuppingData = {
+    body: CuppingUpdate;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/cuppings/{id}';
+};
+
+export type cuppingsUpdateCuppingErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type cuppingsUpdateCuppingError = cuppingsUpdateCuppingErrors[keyof cuppingsUpdateCuppingErrors];
+
+export type cuppingsUpdateCuppingResponses = {
+    /**
+     * Successful Response
+     */
+    200: CuppingPublic;
+};
+
+export type cuppingsUpdateCuppingResponse = cuppingsUpdateCuppingResponses[keyof cuppingsUpdateCuppingResponses];
 
 export type privateCreateUserData = {
     body: PrivateUserCreate;

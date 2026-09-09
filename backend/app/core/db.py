@@ -1,10 +1,30 @@
+import boto3
+from sqlalchemy import event
 from sqlmodel import Session, create_engine, select
 
 from app import crud
 from app.core.config import settings
 from app.models import User, UserCreate
 
-engine = create_engine(str(settings.DATABASE_URL))
+
+def generate_aurora_auth_token() -> str:
+    """Generate a short-lived (~15 min) IAM auth token to use as the DB password."""
+    host = settings.DATABASE_URL.hosts()[0]
+    client = boto3.client("rds", region_name=settings.AWS_REGION)
+    return client.generate_db_auth_token(
+        DBHostname=host["host"],
+        Port=host["port"] or 5432,
+        DBUsername=host["username"],
+        Region=settings.AWS_REGION,
+    )
+
+
+engine = create_engine(str(settings.DATABASE_URL), pool_recycle=600)
+
+
+@event.listens_for(engine, "do_connect")
+def _provide_aurora_token(_dialect, _conn_rec, _cargs, cparams) -> None:
+    cparams["password"] = generate_aurora_auth_token()
 
 
 # make sure all SQLModel models are imported (app.models) before initializing DB

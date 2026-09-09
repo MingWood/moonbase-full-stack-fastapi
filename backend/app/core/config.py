@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     PROJECT_NAME: str
     SENTRY_DSN: HttpUrl | None = None
     DATABASE_URL: PostgresDsn
+    AWS_REGION: str = "us-west-1"
+
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_PASSWORD: str = "admin"
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod

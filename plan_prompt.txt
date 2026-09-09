@@ -1,0 +1,11 @@
+Create a full stack inventory management UI for coffee related inventory using the template within this folder for both mobile and desktop usage. Build it with these requirements:
+- Start with basic auth only and username/pw of admin/admin
+- Only 2 pages navigable via the nav bar "Full Inventory" and "Inventory Update"
+- use postgressql via an aws aurora db for backend via this connection "export RDSHOST="moonbase-database-dev.cluster-c54aicm4oxie.us-west-1.rds.amazonaws.com"
+psql "host=$RDSHOST port=5432 dbname=postgres user=postgres sslmode=require password=$(aws rds generate-db-auth-token --hostname $RDSHOST --port 5432 --username postgres --region us-west-1)""
+- create a master inventory table with each item, its current qty and last updated date, as well as any supporting relational information and other tables as needed
+- keep a separate ledger table of all additions, subtractions, and adjustments to the table as information only
+- use epoch_ms for all timestamp storage in db, translate it all times to local timezone aware strings in UI
+- in "Full Inventory" page, display the entire inventory as a table with editable fields which updates the postgres table and also adds a ledger update row. There should also be an Add Inventory button which opens a modal to input all basic information to create a new inventory item.
+- in the "Inventory Update" page, start with a blank page with a plus icon to add rows for inventory subtraction or addition. For each row added allow the inventory to be found via search by name with easy controls for how many items were taken out or added. A final submit button will update postgres inventory and ledger
+- "Inventory Update" page should be mobile first priority UI design

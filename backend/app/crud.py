@@ -4,7 +4,18 @@ from typing import Any
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate
+from app.models import (
+    InventoryItem,
+    InventoryItemCreate,
+    Item,
+    ItemCreate,
+    LedgerChangeType,
+    LedgerEntry,
+    User,
+    UserCreate,
+    UserUpdate,
+    now_epoch_ms,
+)
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -66,3 +77,58 @@ def create_item(*, session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -
     session.commit()
     session.refresh(db_item)
     return db_item
+
+
+def create_inventory_item(
+    *, session: Session, item_in: InventoryItemCreate
+) -> InventoryItem:
+    db_item = InventoryItem.model_validate(item_in)
+    session.add(db_item)
+    session.flush()
+    if db_item.current_qty:
+        session.add(
+            LedgerEntry(
+                inventory_item_id=db_item.id,
+                item_name=db_item.name,
+                change_type=LedgerChangeType.ADDITION,
+                quantity_change=db_item.current_qty,
+                resulting_qty=db_item.current_qty,
+                note="Initial stock",
+            )
+        )
+    session.commit()
+    session.refresh(db_item)
+    return db_item
+
+
+def apply_inventory_qty_change(
+    *,
+    session: Session,
+    item: InventoryItem,
+    quantity_change: float,
+    change_type: LedgerChangeType,
+    note: str | None = None,
+) -> LedgerEntry:
+    """Updates the item's qty/timestamp and stages a matching ledger row.
+
+    Does not commit - the caller controls the transaction boundary so multiple
+    changes (e.g. a bulk adjustment) can be applied atomically.
+    """
+    # current_qty round-trips through a Postgres NUMERIC column as Decimal;
+    # normalize to float before arithmetic with the (float) quantity_change.
+    new_qty = float(item.current_qty) + quantity_change
+    if new_qty < 0:
+        raise ValueError(f"Insufficient stock for '{item.name}'")
+    item.current_qty = new_qty
+    item.last_updated_ms = now_epoch_ms()
+    session.add(item)
+    ledger_entry = LedgerEntry(
+        inventory_item_id=item.id,
+        item_name=item.name,
+        change_type=change_type,
+        quantity_change=quantity_change,
+        resulting_qty=new_qty,
+        note=note,
+    )
+    session.add(ledger_entry)
+    return ledger_entry
