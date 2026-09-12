@@ -22,10 +22,8 @@ export class LoginService {
     /**
      * Login Access Token
      *
-     * Basic auth: username/password are checked against the configured
-     * ADMIN_USERNAME/ADMIN_PASSWORD rather than a per-user DB lookup. On
-     * success, the JWT subject is the seeded superuser's id (from
-     * FIRST_SUPERUSER) so downstream `CurrentUser`-dependent routes keep working.
+     * OAuth2 compatible token login, get an access token for future requests.
+     * Multi-user: checks the submitted email/password against the Users table.
      */
     public static loginAccessToken<ThrowOnError extends boolean = true>(options: Options<loginLoginAccessTokenData, ThrowOnError>) {
         return (options.client ?? client).post<loginLoginAccessTokenResponses, loginLoginAccessTokenErrors, ThrowOnError>({
@@ -199,11 +197,13 @@ export class UsersService {
     /**
      * Register User
      *
-     * Create new user without the need to be logged in.
+     * Create a new user. Superuser-only: this system only supports adding
+     * approved users (via this endpoint or seeding), not open self-registration.
      */
     public static registerUser<ThrowOnError extends boolean = true>(options: Options<usersRegisterUserData, ThrowOnError>) {
         return (options.client ?? client).post<usersRegisterUserResponses, usersRegisterUserErrors, ThrowOnError>({
             responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/v1/users/signup',
             ...options,
             headers: {

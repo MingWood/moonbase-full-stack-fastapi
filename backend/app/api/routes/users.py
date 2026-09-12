@@ -143,10 +143,15 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
     return Message(message="User deleted successfully")
 
 
-@router.post("/signup", response_model=UserPublic)
+@router.post(
+    "/signup",
+    dependencies=[Depends(get_current_active_superuser)],
+    response_model=UserPublic,
+)
 def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     """
-    Create new user without the need to be logged in.
+    Create a new user. Superuser-only: this system only supports adding
+    approved users (via this endpoint or seeding), not open self-registration.
     """
     user = crud.get_user_by_email(session=session, email=user_in.email)
     if user:

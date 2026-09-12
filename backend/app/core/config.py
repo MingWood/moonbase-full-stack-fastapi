@@ -31,9 +31,6 @@ class Settings(BaseSettings):
     DATABASE_URL: PostgresDsn
     AWS_REGION: str = "us-west-1"
 
-    ADMIN_USERNAME: str = "admin"
-    ADMIN_PASSWORD: str = "admin"
-
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def _use_psycopg_driver(cls, value: str | PostgresDsn) -> str:

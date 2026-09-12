@@ -24,8 +24,6 @@ services:
       SECRET_KEY: ${SECRET_KEY:?Variable not set}
       FIRST_SUPERUSER: ${FIRST_SUPERUSER:?Variable not set}
       FIRST_SUPERUSER_PASSWORD: ${FIRST_SUPERUSER_PASSWORD:?Variable not set}
-      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}

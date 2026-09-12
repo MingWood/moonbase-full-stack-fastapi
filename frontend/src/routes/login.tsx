@@ -1,5 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { createFileRoute, redirect } from "@tanstack/react-router"
+import {
+  createFileRoute,
+  Link as RouterLink,
+  redirect,
+} from "@tanstack/react-router"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
@@ -19,8 +23,11 @@ import { PasswordInput } from "@/components/ui/password-input"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
 
 const formSchema = z.object({
-  username: z.string().min(1, { message: "Username is required" }),
-  password: z.string().min(1, { message: "Password is required" }),
+  username: z.email({ message: "Invalid email address" }),
+  password: z
+    .string()
+    .min(1, { message: "Password is required" })
+    .min(8, { message: "Password must be at least 8 characters" }),
 }) satisfies z.ZodType<AccessToken>
 
 type FormData = z.infer<typeof formSchema>
@@ -77,12 +84,12 @@ function Login() {
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input
-                      data-testid="username-input"
-                      placeholder="admin"
-                      type="text"
+                      data-testid="email-input"
+                      placeholder="user@example.com"
+                      type="email"
                       {...field}
                     />
                   </FormControl>
@@ -96,7 +103,15 @@ function Login() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <div className="flex items-center">
+                    <FormLabel>Password</FormLabel>
+                    <RouterLink
+                      to="/recover-password"
+                      className="ml-auto text-sm underline-offset-4 hover:underline"
+                    >
+                      Forgot your password?
+                    </RouterLink>
+                  </div>
                   <FormControl>
                     <PasswordInput
                       data-testid="password-input"
