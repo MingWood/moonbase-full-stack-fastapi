@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Coffee, Plus } from "lucide-react"
-import { Suspense, useState } from "react"
+import { Fragment, Suspense, useState } from "react"
 
 import type { CuppingPublic } from "@/client"
 import { CuppingsService } from "@/client"
@@ -13,6 +13,23 @@ import {
 } from "@/components/Cuppings/DateRangeFilter"
 import PendingCuppings from "@/components/Pending/PendingCuppings"
 import { Button } from "@/components/ui/button"
+import { formatEpochMsDate } from "@/lib/datetime"
+
+function dayKey(ms: number): string {
+  const d = new Date(ms)
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+}
+
+function DateSeparator({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-2 px-1 pt-3 pb-1 first:pt-0">
+      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+        {label}
+      </span>
+      <div className="h-px flex-1 bg-border" />
+    </div>
+  )
+}
 
 function getCuppingsQueryOptions(range: DateRange) {
   return {
@@ -69,15 +86,24 @@ function CuppingsListContent({
     )
   }
 
+  let previousDayKey: string | null = null
+
   return (
     <div className="flex flex-col gap-2">
-      {cuppings.data.map((cupping) => (
-        <CuppingRow
-          key={cupping.id}
-          cupping={cupping}
-          onClick={() => onEdit(cupping)}
-        />
-      ))}
+      {cuppings.data.map((cupping) => {
+        const currentDayKey = dayKey(cupping.date)
+        const showSeparator = currentDayKey !== previousDayKey
+        previousDayKey = currentDayKey
+
+        return (
+          <Fragment key={cupping.id}>
+            {showSeparator && (
+              <DateSeparator label={formatEpochMsDate(cupping.date)} />
+            )}
+            <CuppingRow cupping={cupping} onClick={() => onEdit(cupping)} />
+          </Fragment>
+        )
+      })}
     </div>
   )
 }

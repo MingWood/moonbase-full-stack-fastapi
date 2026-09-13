@@ -4,3 +4,7 @@ export function formatEpochMs(ms: number): string {
     timeStyle: "short",
   })
 }
+
+export function formatEpochMsDate(ms: number): string {
+  return new Date(ms).toLocaleDateString(undefined, { dateStyle: "medium" })
+}

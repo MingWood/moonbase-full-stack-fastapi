@@ -1,8 +1,15 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Minus, Plus } from "lucide-react"
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Minus,
+  Plus,
+} from "lucide-react"
 import { useEffect } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
 
 import { type CuppingPublic, CuppingsService } from "@/client"
@@ -21,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 import { BREW_STYLE_OPTIONS, ROASTING_MACHINE_OPTIONS } from "./constants"
+import { calculateQScore } from "./qscore"
 import { SegmentedToggle } from "./SegmentedToggle"
 
 const formSchema = z.object({
@@ -50,6 +58,85 @@ const emptyDefaults: FormInput = {
   taste_score: 0,
   aftertaste_score: 0,
   notes: "",
+}
+
+const SCORE_FIELDS = [
+  { name: "fragrance_score", label: "Fragrance" },
+  { name: "aroma_score", label: "Aroma" },
+  { name: "taste_score", label: "Taste" },
+  { name: "aftertaste_score", label: "Aftertaste" },
+] as const
+
+function ScoreStepper({
+  label,
+  value,
+  onChange,
+  getBase,
+}: {
+  label: string
+  value: number
+  onChange: (value: number) => void
+  getBase: () => number
+}) {
+  const step = (delta: number) => {
+    const base = value !== 0 ? value : getBase()
+    const next = Math.min(
+      10,
+      Math.max(0, Math.round((base + delta) * 100) / 100),
+    )
+    onChange(next)
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label>{label}</Label>
+      <ButtonGroup className="w-full">
+        <Button
+          type="button"
+          variant="outline"
+          className="h-14 flex-1"
+          onClick={() => step(-0.5)}
+        >
+          <ChevronsLeft className="size-5" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-14 flex-1"
+          onClick={() => step(-0.25)}
+        >
+          <ChevronLeft className="size-5" />
+        </Button>
+        <Input
+          className="h-14 min-w-0 flex-[2] text-center text-lg font-semibold"
+          type="number"
+          min={0}
+          max={10}
+          step={0.25}
+          value={value}
+          onChange={(e) =>
+            onChange(e.target.value === "" ? 0 : Number(e.target.value))
+          }
+        />
+        <Button
+          type="button"
+          variant="outline"
+          className="h-14 flex-1"
+          onClick={() => step(0.25)}
+        >
+          <ChevronRight className="size-5" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-14 flex-1"
+          onClick={() => step(0.5)}
+        >
+          <ChevronsRight className="size-5" />
+        </Button>
+      </ButtonGroup>
+    </div>
+  )
 }
 
 function toFormValues(cupping: CuppingPublic): FormInput {
@@ -119,19 +206,45 @@ export function CuppingFormModal({
     mutation.mutate(data)
   }
 
+  const [watchedFragrance, watchedAroma, watchedTaste, watchedAftertaste] =
+    useWatch({
+      control: form.control,
+      name: [
+        "fragrance_score",
+        "aroma_score",
+        "taste_score",
+        "aftertaste_score",
+      ],
+    })
+  const qScore = calculateQScore(
+    Number(watchedFragrance) || 0,
+    Number(watchedAroma) || 0,
+    Number(watchedTaste) || 0,
+    Number(watchedAftertaste) || 0,
+  )
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex flex-col gap-0 p-0 max-h-[90vh] sm:max-w-xl">
         <DialogHeader className="sticky top-0 z-10 bg-background border-b px-6 py-4 flex-row items-center justify-between gap-4 space-y-0">
           <DialogTitle>{isEdit ? "Edit Cupping" : "Add Cupping"}</DialogTitle>
-          <LoadingButton
-            type="submit"
-            form="cupping-form"
-            loading={mutation.isPending}
-            className="mr-6"
-          >
-            {isEdit ? "Save" : "Submit"}
-          </LoadingButton>
+          <div className="flex items-center gap-3 mr-6">
+            <div className="flex flex-col items-center px-3 py-1 rounded-md bg-red-100 dark:bg-red-950/50">
+              <span className="text-[10px] uppercase tracking-wide text-red-700/70 dark:text-red-300/70">
+                Q
+              </span>
+              <span className="font-semibold tabular-nums text-red-700 dark:text-red-300">
+                {qScore}
+              </span>
+            </div>
+            <LoadingButton
+              type="submit"
+              form="cupping-form"
+              loading={mutation.isPending}
+            >
+              {isEdit ? "Save" : "Submit"}
+            </LoadingButton>
+          </div>
         </DialogHeader>
 
         <form
@@ -229,55 +342,29 @@ export function CuppingFormModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="fragrance_score">Fragrance</Label>
-              <Input
-                id="fragrance_score"
-                className="h-11"
-                type="number"
-                min={0}
-                max={10}
-                step={0.25}
-                {...form.register("fragrance_score")}
+          <div className="flex flex-col gap-4">
+            {SCORE_FIELDS.map(({ name, label }, index) => (
+              <Controller
+                key={name}
+                control={form.control}
+                name={name}
+                render={({ field }) => (
+                  <ScoreStepper
+                    label={label}
+                    value={Number(field.value) || 0}
+                    onChange={field.onChange}
+                    getBase={() => {
+                      for (let j = index - 1; j >= 0; j--) {
+                        const v =
+                          Number(form.getValues(SCORE_FIELDS[j].name)) || 0
+                        if (v !== 0) return v
+                      }
+                      return 8
+                    }}
+                  />
+                )}
               />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="aroma_score">Aroma</Label>
-              <Input
-                id="aroma_score"
-                className="h-11"
-                type="number"
-                min={0}
-                max={10}
-                step={0.25}
-                {...form.register("aroma_score")}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="taste_score">Taste</Label>
-              <Input
-                id="taste_score"
-                className="h-11"
-                type="number"
-                min={0}
-                max={10}
-                step={0.25}
-                {...form.register("taste_score")}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="aftertaste_score">Aftertaste</Label>
-              <Input
-                id="aftertaste_score"
-                className="h-11"
-                type="number"
-                min={0}
-                max={10}
-                step={0.25}
-                {...form.register("aftertaste_score")}
-              />
-            </div>
+            ))}
           </div>
 
           <div className="flex flex-col gap-1.5">
