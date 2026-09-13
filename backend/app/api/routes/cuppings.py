@@ -4,8 +4,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import col, func, select
 
-from app.api.deps import SessionDep, get_current_user
-from app.core.config import settings
+from app.api.deps import CurrentUser, SessionDep, get_current_user
 from app.models import (
     Cupping,
     CuppingCreate,
@@ -57,12 +56,15 @@ def read_cupping(session: SessionDep, id: uuid.UUID) -> Any:
 
 
 @router.post("/", response_model=CuppingPublic)
-def create_cupping(session: SessionDep, cupping_in: CuppingCreate) -> Any:
+def create_cupping(
+    session: SessionDep, current_user: CurrentUser, cupping_in: CuppingCreate
+) -> Any:
     """
     Create a new cupping. `date` and `who_tasted` are set server-side.
     """
     cupping = Cupping.model_validate(
-        cupping_in, update={"who_tasted": settings.ADMIN_USERNAME}
+        cupping_in,
+        update={"who_tasted": current_user.full_name or current_user.email},
     )
     session.add(cupping)
     session.commit()
