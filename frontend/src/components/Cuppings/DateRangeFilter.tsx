@@ -1,17 +1,16 @@
 import { CalendarRange } from "lucide-react"
 import { useEffect, useState } from "react"
+import type { DateRange as CalendarDateRange } from "react-day-picker"
 
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { formatEpochMs } from "@/lib/datetime"
 
 export interface DateRange {
@@ -19,16 +18,21 @@ export interface DateRange {
   end: number | null
 }
 
-function msToLocalInputValue(ms: number): string {
-  const d = new Date(ms)
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+function pad(n: number): string {
+  return String(n).padStart(2, "0")
 }
 
-function localInputValueToMs(value: string): number | null {
-  if (!value) return null
-  const ms = new Date(value).getTime()
-  return Number.isNaN(ms) ? null : ms
+function timeOf(date: number | null): string {
+  if (!date) return "00:00"
+  const d = new Date(date)
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function combine(date: Date, time: string): number {
+  const [hours, minutes] = time.split(":").map(Number)
+  const combined = new Date(date)
+  combined.setHours(hours || 0, minutes || 0, 0, 0)
+  return combined.getTime()
 }
 
 export function DateRangeFilter({
@@ -39,13 +43,18 @@ export function DateRangeFilter({
   onChange: (value: DateRange) => void
 }) {
   const [open, setOpen] = useState(false)
-  const [draftStart, setDraftStart] = useState("")
-  const [draftEnd, setDraftEnd] = useState("")
+  const [range, setRange] = useState<CalendarDateRange | undefined>()
+  const [startTime, setStartTime] = useState("00:00")
+  const [endTime, setEndTime] = useState("23:59")
 
   useEffect(() => {
     if (open) {
-      setDraftStart(value.start ? msToLocalInputValue(value.start) : "")
-      setDraftEnd(value.end ? msToLocalInputValue(value.end) : "")
+      setRange({
+        from: value.start ? new Date(value.start) : undefined,
+        to: value.end ? new Date(value.end) : undefined,
+      })
+      setStartTime(timeOf(value.start))
+      setEndTime(timeOf(value.end))
     }
   }, [open, value.start, value.end])
 
@@ -60,8 +69,8 @@ export function DateRangeFilter({
 
   const apply = () => {
     onChange({
-      start: localInputValueToMs(draftStart),
-      end: localInputValueToMs(draftEnd),
+      start: range?.from ? combine(range.from, startTime) : null,
+      end: range?.to ? combine(range.to, endTime) : null,
     })
     setOpen(false)
   }
@@ -72,8 +81,8 @@ export function DateRangeFilter({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <Button
           variant="outline"
           className="h-11 max-w-56 sm:max-w-xs justify-start gap-2 font-normal"
@@ -81,40 +90,44 @@ export function DateRangeFilter({
           <CalendarRange className="size-4 shrink-0" />
           <span className="truncate">{label}</span>
         </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Filter by Date</DialogTitle>
-        </DialogHeader>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="range-start">Start</Label>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="range"
+          selected={range}
+          onSelect={setRange}
+          defaultMonth={range?.from}
+          numberOfMonths={1}
+        />
+        <div className="flex items-center gap-3 border-t px-4 py-3">
+          <div className="flex flex-1 flex-col gap-1.5">
+            <Label htmlFor="range-start-time">Start time</Label>
             <Input
-              id="range-start"
-              type="datetime-local"
-              className="h-11"
-              value={draftStart}
-              onChange={(e) => setDraftStart(e.target.value)}
+              id="range-start-time"
+              type="time"
+              className="h-10"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
             />
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="range-end">End</Label>
+          <div className="flex flex-1 flex-col gap-1.5">
+            <Label htmlFor="range-end-time">End time</Label>
             <Input
-              id="range-end"
-              type="datetime-local"
-              className="h-11"
-              value={draftEnd}
-              onChange={(e) => setDraftEnd(e.target.value)}
+              id="range-end-time"
+              type="time"
+              className="h-10"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
             />
           </div>
         </div>
-        <DialogFooter>
+        <div className="flex justify-end gap-2 border-t px-4 py-3">
           <Button variant="outline" onClick={clear}>
             Clear
           </Button>
           <Button onClick={apply}>Apply</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </PopoverContent>
+    </Popover>
   )
 }
