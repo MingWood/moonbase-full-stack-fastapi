@@ -1,4 +1,4 @@
-import { useSuspenseQuery } from "@tanstack/react-query"
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Coffee, Plus } from "lucide-react"
 import { Fragment, Suspense, useState } from "react"
@@ -113,6 +113,9 @@ function CuppingsPage() {
   const [modalTarget, setModalTarget] = useState<CuppingPublic | "new" | null>(
     null,
   )
+  const { data: cuppings } = useQuery(getCuppingsQueryOptions(range))
+  const lastCupping = cuppings?.data[cuppings.data.length - 1]
+  const nextOrderId = lastCupping ? lastCupping.order_id + 1 : 0
 
   return (
     <div className="flex flex-col gap-4">
@@ -136,6 +139,7 @@ function CuppingsPage() {
           if (!open) setModalTarget(null)
         }}
         cupping={modalTarget && modalTarget !== "new" ? modalTarget : undefined}
+        defaultOrderId={nextOrderId}
       />
     </div>
   )

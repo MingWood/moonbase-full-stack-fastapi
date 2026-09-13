@@ -8,7 +8,7 @@ import {
   Minus,
   Plus,
 } from "lucide-react"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
 
@@ -24,10 +24,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LoadingButton } from "@/components/ui/loading-button"
-import { Textarea } from "@/components/ui/textarea"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 import { BREW_STYLE_OPTIONS, ROASTING_MACHINE_OPTIONS } from "./constants"
+import { NotesEditor, type NotesEditorHandle } from "./NotesEditor"
+import { applyNoteTimestamp, toDisplayNotes } from "./notesFormat"
 import { calculateQScore } from "./qscore"
 import { SegmentedToggle } from "./SegmentedToggle"
 
@@ -150,7 +151,7 @@ function toFormValues(cupping: CuppingPublic): FormInput {
     aroma_score: cupping.aroma_score,
     taste_score: cupping.taste_score,
     aftertaste_score: cupping.aftertaste_score,
-    notes: cupping.notes ?? "",
+    notes: toDisplayNotes(cupping.notes ?? ""),
   }
 }
 
@@ -158,10 +159,12 @@ export function CuppingFormModal({
   open,
   onOpenChange,
   cupping,
+  defaultOrderId = 0,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   cupping?: CuppingPublic | null
+  defaultOrderId?: number
 }) {
   const isEdit = !!cupping
   const queryClient = useQueryClient()
@@ -172,15 +175,26 @@ export function CuppingFormModal({
     defaultValues: emptyDefaults,
   })
 
+  // Tracks the notes exactly as they were when the dialog opened, so
+  // submit-time diffing can tell "appended text" apart from edits to
+  // previously entered content.
+  const notesBaselineRef = useRef("")
+  const notesEditorRef = useRef<NotesEditorHandle>(null)
+
   // Only re-sync when the dialog opens or the target row changes, not on
   // every keystroke inside the form (form.reset identity is stable but
   // including it isn't necessary here).
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
   useEffect(() => {
     if (open) {
-      form.reset(cupping ? toFormValues(cupping) : emptyDefaults)
+      const values = cupping
+        ? toFormValues(cupping)
+        : { ...emptyDefaults, order_id: defaultOrderId }
+      notesBaselineRef.current = values.notes ?? ""
+      form.reset(values)
+      notesEditorRef.current?.setDisplayValue(values.notes ?? "")
     }
-  }, [open, cupping])
+  }, [open, cupping, defaultOrderId])
 
   const mutation = useMutation({
     mutationFn: (data: FormOutput) =>
@@ -203,7 +217,16 @@ export function CuppingFormModal({
   })
 
   const onSubmit = (data: FormOutput) => {
-    mutation.mutate(data)
+    const elapsedMinutes =
+      isEdit && cupping
+        ? Math.max(0, Math.ceil((Date.now() - cupping.date) / 60_000))
+        : 0
+    const notes = applyNoteTimestamp(
+      notesBaselineRef.current,
+      data.notes ?? "",
+      elapsedMinutes,
+    )
+    mutation.mutate({ ...data, notes })
   }
 
   const [watchedFragrance, watchedAroma, watchedTaste, watchedAftertaste] =
@@ -369,11 +392,18 @@ export function CuppingFormModal({
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              rows={5}
-              placeholder="Tasting notes..."
-              {...form.register("notes")}
+            <Controller
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <NotesEditor
+                  ref={notesEditorRef}
+                  id="notes"
+                  defaultValue={field.value ?? ""}
+                  onChange={field.onChange}
+                  placeholder="Tasting notes..."
+                />
+              )}
             />
           </div>
         </form>
