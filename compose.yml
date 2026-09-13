@@ -3,21 +3,26 @@ services:
   backend:
     image: backend:latest
     environment:
-      PROJECT_NAME: ${PROJECT_NAME:?Variable not set}
-      SECRET_KEY: ${SECRET_KEY:?Variable not set}
-      FIRST_SUPERUSER: ${FIRST_SUPERUSER:?Variable not set}
-      FIRST_SUPERUSER_PASSWORD: ${FIRST_SUPERUSER_PASSWORD:?Variable not set}
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      EMAILS_FROM_EMAIL: ${EMAILS_FROM_EMAIL}
-      DATABASE_URL: ${DATABASE_URL:?Variable not set}
-      AWS_REGION: ${AWS_REGION:-us-west-1}
-      AWS_PROFILE: ${AWS_PROFILE:-}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
-      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
-      SENTRY_DSN: ${SENTRY_DSN:-}
+      - PROJECT_NAME=${PROJECT_NAME:?Variable not set}
+      - SECRET_KEY=${SECRET_KEY:?Variable not set}
+      - FIRST_SUPERUSER=${FIRST_SUPERUSER:?Variable not set}
+      - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD:?Variable not set}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - EMAILS_FROM_EMAIL=${EMAILS_FROM_EMAIL}
+      - DATABASE_URL=${DATABASE_URL:?Variable not set}
+      - AWS_REGION=${AWS_REGION:-us-west-1}
+      # Bare (no "="): passed through only if actually set on the host/VM,
+      # omitted entirely otherwise. Unlike `${VAR:-}`, this does NOT set an
+      # explicit empty string - botocore treats AWS_PROFILE="" as "use a
+      # profile named ''" and crashes with ProfileNotFound, instead of
+      # falling through to the EC2 instance role / IMDS credentials.
+      - AWS_PROFILE
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_SESSION_TOKEN
+      - SENTRY_DSN=${SENTRY_DSN:-}
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
