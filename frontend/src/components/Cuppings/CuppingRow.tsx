@@ -1,16 +1,6 @@
-import type { CuppingPublic, RoastingMachine } from "@/client"
+import type { CuppingPublic } from "@/client"
+import { roastingMachinePrefix } from "./constants"
 import { calculateQScore } from "./qscore"
-
-function roastingMachinePrefix(machine: RoastingMachine): string {
-  switch (machine) {
-    case "hq_loring":
-      return "L"
-    case "sagvag":
-      return "S"
-    default:
-      return "N"
-  }
-}
 
 function ScoreCell({ label, value }: { label: string; value: number }) {
   return (
@@ -69,7 +59,7 @@ export function CuppingRow({
           {cupping.roast_id}
         </span>
         <span className="text-xs text-muted-foreground truncate leading-tight">
-          nickname
+          {cupping.manual_name || cupping.resolved_name}
         </span>
       </div>
 

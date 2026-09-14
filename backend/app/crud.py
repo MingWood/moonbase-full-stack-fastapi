@@ -1,21 +1,28 @@
 import uuid
 from typing import Any
 
-from sqlmodel import Session, select
+from sqlmodel import Session, col, func, select
 
 from app.core.security import get_password_hash, verify_password
 from app.models import (
+    Cupping,
     InventoryItem,
     InventoryItemCreate,
     Item,
     ItemCreate,
     LedgerChangeType,
     LedgerEntry,
+    RetoolCoffee,
+    RetoolRoast,
+    RetoolRoestEtl,
+    RoastingMachine,
     User,
     UserCreate,
     UserUpdate,
     now_epoch_ms,
 )
+
+RUN_RATE_WINDOW_DAYS = 60
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -99,6 +106,86 @@ def create_inventory_item(
     session.commit()
     session.refresh(db_item)
     return db_item
+
+
+def compute_run_rates(
+    *, session: Session, item_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, float]:
+    """Average monthly net change in quantity per item, from ledger entries
+    in the trailing 60 days (~2 months). Negative means net consumption.
+
+    Only "addition"/"subtraction" entries count (the Inventory Update page).
+    "adjustment" entries (manual corrections made inline on the Full
+    Inventory table) are excluded so a recount/typo fix doesn't skew the
+    estimate the same way real stock movement would.
+    """
+    if not item_ids:
+        return {}
+    cutoff_ms = now_epoch_ms() - RUN_RATE_WINDOW_DAYS * 24 * 60 * 60 * 1000
+    statement = (
+        select(LedgerEntry.inventory_item_id, func.sum(LedgerEntry.quantity_change))
+        .where(col(LedgerEntry.inventory_item_id).in_(item_ids))
+        .where(LedgerEntry.created_at_ms >= cutoff_ms)
+        .where(
+            col(LedgerEntry.change_type).in_(
+                [LedgerChangeType.ADDITION, LedgerChangeType.SUBTRACTION]
+            )
+        )
+        .group_by(col(LedgerEntry.inventory_item_id))
+    )
+    results = session.exec(statement).all()
+    return {item_id: float(net_change) / 2.0 for item_id, net_change in results}
+
+
+def resolve_cupping_names(
+    *, session: Session, cuppings: list[Cupping]
+) -> dict[uuid.UUID, str | None]:
+    """Display name for cuppings that have no manual_name, derived from the
+    roast that was cupped.
+
+    "sagvag" roasts are matched by roast_id against roest_etl.batch_no,
+    using its bean_name. "hq_loring" roasts are matched by roast_id against
+    roasts.id, then to coffees.name via roasts.coffees_id. Any other
+    roasting_machine (or no match in the source tables) resolves to None -
+    these tables are a one-time copy from Retool for reference, not a live
+    sync, so older/unrelated roast_ids may simply not be present.
+    """
+    unresolved = [c for c in cuppings if not c.manual_name]
+    sagvag_ids = {
+        c.roast_id for c in unresolved if c.roasting_machine == RoastingMachine.SAGVAG
+    }
+    loring_ids = {
+        c.roast_id
+        for c in unresolved
+        if c.roasting_machine == RoastingMachine.HQ_LORING
+    }
+
+    bean_names: dict[int, str | None] = {}
+    if sagvag_ids:
+        rows = session.exec(
+            select(RetoolRoestEtl.batch_no, RetoolRoestEtl.bean_name).where(
+                col(RetoolRoestEtl.batch_no).in_(sagvag_ids),
+                RetoolRoestEtl.machine_name == "sagvag",
+            )
+        ).all()
+        bean_names = dict(rows)
+
+    coffee_names: dict[int, str | None] = {}
+    if loring_ids:
+        rows = session.exec(
+            select(RetoolRoast.id, RetoolCoffee.name)
+            .join(RetoolCoffee, col(RetoolCoffee.id) == RetoolRoast.coffees_id)
+            .where(col(RetoolRoast.id).in_(loring_ids))
+        ).all()
+        coffee_names = dict(rows)
+
+    resolved: dict[uuid.UUID, str | None] = {}
+    for c in unresolved:
+        if c.roasting_machine == RoastingMachine.SAGVAG:
+            resolved[c.id] = bean_names.get(c.roast_id)
+        elif c.roasting_machine == RoastingMachine.HQ_LORING:
+            resolved[c.id] = coffee_names.get(c.roast_id)
+    return resolved
 
 
 def apply_inventory_qty_change(

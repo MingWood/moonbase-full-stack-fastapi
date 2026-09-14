@@ -4,6 +4,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import col, func, select
 
+from app import crud
 from app.api.deps import CurrentUser, SessionDep, get_current_user
 from app.models import (
     Cupping,
@@ -16,6 +17,12 @@ from app.models import (
 router = APIRouter(
     prefix="/cuppings", tags=["cuppings"], dependencies=[Depends(get_current_user)]
 )
+
+
+def _with_resolved_name(cupping: Cupping, resolved_name: str | None) -> CuppingPublic:
+    return CuppingPublic.model_validate(
+        cupping, update={"resolved_name": resolved_name}
+    )
 
 
 @router.get("/", response_model=CuppingsPublic)
@@ -41,7 +48,9 @@ def read_cuppings(
     count = session.exec(count_statement).one()
     statement = statement.order_by(col(Cupping.date).asc()).offset(skip).limit(limit)
     cuppings = session.exec(statement).all()
-    return CuppingsPublic(data=cuppings, count=count)
+    resolved = crud.resolve_cupping_names(session=session, cuppings=cuppings)
+    data = [_with_resolved_name(c, resolved.get(c.id)) for c in cuppings]
+    return CuppingsPublic(data=data, count=count)
 
 
 @router.get("/{id}", response_model=CuppingPublic)
@@ -52,7 +61,8 @@ def read_cupping(session: SessionDep, id: uuid.UUID) -> Any:
     cupping = session.get(Cupping, id)
     if not cupping:
         raise HTTPException(status_code=404, detail="Cupping not found")
-    return cupping
+    resolved = crud.resolve_cupping_names(session=session, cuppings=[cupping])
+    return _with_resolved_name(cupping, resolved.get(cupping.id))
 
 
 @router.post("/", response_model=CuppingPublic)
@@ -69,7 +79,8 @@ def create_cupping(
     session.add(cupping)
     session.commit()
     session.refresh(cupping)
-    return cupping
+    resolved = crud.resolve_cupping_names(session=session, cuppings=[cupping])
+    return _with_resolved_name(cupping, resolved.get(cupping.id))
 
 
 @router.put("/{id}", response_model=CuppingPublic)
@@ -87,4 +98,5 @@ def update_cupping(
     session.add(cupping)
     session.commit()
     session.refresh(cupping)
-    return cupping
+    resolved = crud.resolve_cupping_names(session=session, cuppings=[cupping])
+    return _with_resolved_name(cupping, resolved.get(cupping.id))

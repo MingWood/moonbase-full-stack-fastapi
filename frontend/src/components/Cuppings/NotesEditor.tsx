@@ -29,27 +29,39 @@ function escapeHtml(value: string): string {
     .replace(/>/g, "&gt;")
 }
 
-// Each saved block is a single line shaped like `{T:0} text {T:0}`. Lines
-// matching that shape get a highlighted background with small, raised tags;
-// anything else (freshly typed text with no tags yet) renders as plain text.
+// Each saved block is a `{T:0} text {T:0}` pair, normally alone on its own
+// line. Older/legacy notes can have a block followed by unwrapped plain text
+// on the same line (from before append-detection was fixed) -- find the
+// block wherever it sits in the line and style just that part, rendering
+// whatever else is on the line (before or after) as plain text.
+function renderLine(line: string, blockIndex: { current: number }): string {
+  const match = line.match(/\{T:(\d+)\}([\s\S]*?)\{T:\1\}/)
+  if (!match) return escapeHtml(line)
+
+  const [full, min, inner] = match
+  const start = match.index ?? 0
+  const before = line.slice(0, start)
+  const after = line.slice(start + full.length)
+  const colorClass =
+    BLOCK_COLOR_CLASSES[blockIndex.current % BLOCK_COLOR_CLASSES.length]
+  blockIndex.current++
+  // contenteditable=false makes each tag an atomic chip: the caret can't
+  // land inside it, so newly typed text can't inherit its tiny/raised
+  // styling the way it could when the tag was just a plain inline span.
+  const tag = `<span contenteditable="false" class="${TAG_CLASS}">{T:${min}}</span>`
+  return (
+    escapeHtml(before) +
+    `<span class="${colorClass} ${BLOCK_BASE_CLASS}">${tag}${escapeHtml(inner)}${tag}</span>` +
+    escapeHtml(after)
+  )
+}
+
 function renderNotesHtml(display: string): string {
   if (!display) return ""
-  let blockIndex = 0
+  const blockIndex = { current: 0 }
   return display
     .split("\n")
-    .map((line) => {
-      const match = line.match(/^\{T:(\d+)\}(.*)\{T:\1\}$/)
-      if (!match) return escapeHtml(line)
-      const [, min, inner] = match
-      const colorClass =
-        BLOCK_COLOR_CLASSES[blockIndex % BLOCK_COLOR_CLASSES.length]
-      blockIndex++
-      // contenteditable=false makes each tag an atomic chip: the caret can't
-      // land inside it, so newly typed text can't inherit its tiny/raised
-      // styling the way it could when the tag was just a plain inline span.
-      const tag = `<span contenteditable="false" class="${TAG_CLASS}">{T:${min}}</span>`
-      return `<span class="${colorClass} ${BLOCK_BASE_CLASS}">${tag}${escapeHtml(inner)}${tag}</span>`
-    })
+    .map((line) => renderLine(line, blockIndex))
     .join("<br>")
 }
 
@@ -124,7 +136,7 @@ export const NotesEditor = forwardRef<
         onChange(text)
       }}
       className={cn(
-        "border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 min-h-32 w-full rounded-md border bg-transparent px-3 py-2 text-base whitespace-pre-wrap break-words shadow-xs outline-none transition-[color,box-shadow] focus-visible:ring-[3px] md:text-sm",
+        "border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 min-h-32 w-full rounded-md border bg-transparent px-3 py-2 text-base whitespace-pre-wrap break-words shadow-xs outline-none transition-[color,box-shadow,min-height] duration-200 focus-visible:ring-[3px] focus:min-h-48 caret-primary md:text-sm",
         isEmpty &&
           "before:content-[attr(data-placeholder)] before:text-muted-foreground",
       )}

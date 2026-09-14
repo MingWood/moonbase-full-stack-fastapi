@@ -222,6 +222,53 @@ function CategoryFilterHeader({
   )
 }
 
+function RunRateCell({ item }: { item: InventoryItemPublic }) {
+  const rate = item.run_rate_per_month ?? 0
+  if (rate === 0) {
+    return <span className="text-muted-foreground text-sm">—</span>
+  }
+  const isConsuming = rate < 0
+  return (
+    <span
+      className={cn(
+        "text-sm font-medium tabular-nums whitespace-nowrap",
+        isConsuming
+          ? "text-red-600 dark:text-red-400"
+          : "text-emerald-600 dark:text-emerald-400",
+      )}
+    >
+      {rate > 0 ? "+" : ""}
+      {rate.toFixed(1)} {item.unit}/mo
+    </span>
+  )
+}
+
+function MonthsRemainingCell({
+  months,
+}: {
+  months: number | null | undefined
+}) {
+  if (months == null) {
+    return <span className="text-muted-foreground text-sm">—</span>
+  }
+  const urgency =
+    months < 1
+      ? "text-red-600 dark:text-red-400"
+      : months < 2
+        ? "text-orange-600 dark:text-orange-400"
+        : "text-foreground"
+  return (
+    <span
+      className={cn(
+        "text-sm font-medium tabular-nums whitespace-nowrap",
+        urgency,
+      )}
+    >
+      {months.toFixed(1)} mo
+    </span>
+  )
+}
+
 function UnitCell({ item }: { item: InventoryItemPublic }) {
   const mutation = useUpdateInventoryItem()
   return (
@@ -322,6 +369,18 @@ export function createColumns({
           value={row.original.reorder_threshold}
           allowEmpty
         />
+      ),
+    },
+    {
+      accessorKey: "run_rate_per_month",
+      header: "Run Rate",
+      cell: ({ row }) => <RunRateCell item={row.original} />,
+    },
+    {
+      accessorKey: "months_remaining",
+      header: "Months Left",
+      cell: ({ row }) => (
+        <MonthsRemainingCell months={row.original.months_remaining} />
       ),
     },
     {

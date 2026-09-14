@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_layout/inventory-update")({
 
 const emptyRow = () => ({
   item: null,
-  changeType: "addition" as const,
+  changeType: "subtraction" as const,
   quantity: "1",
   note: "",
 })

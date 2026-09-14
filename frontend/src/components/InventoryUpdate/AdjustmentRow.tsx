@@ -61,15 +61,6 @@ export function AdjustmentRow({
             <div className="flex gap-2">
               <Button
                 type="button"
-                variant={field.value === "addition" ? "default" : "outline"}
-                className="flex-1 h-11"
-                onClick={() => field.onChange("addition")}
-              >
-                <Plus className="mr-1 size-4" />
-                Add
-              </Button>
-              <Button
-                type="button"
                 variant={field.value === "subtraction" ? "default" : "outline"}
                 className={cn(
                   "flex-1 h-11",
@@ -80,6 +71,15 @@ export function AdjustmentRow({
               >
                 <Minus className="mr-1 size-4" />
                 Remove
+              </Button>
+              <Button
+                type="button"
+                variant={field.value === "addition" ? "default" : "outline"}
+                className="flex-1 h-11"
+                onClick={() => field.onChange("addition")}
+              >
+                <Plus className="mr-1 size-4" />
+                Add
               </Button>
             </div>
           )}

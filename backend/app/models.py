@@ -4,7 +4,8 @@ from datetime import UTC, datetime
 from enum import StrEnum
 
 from pydantic import EmailStr
-from sqlalchemy import BigInteger, DateTime, Numeric, String
+from sqlalchemy import BigInteger, DateTime, Float, Numeric, String, Text
+from sqlalchemy import Enum as PgEnum
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -144,6 +145,13 @@ class LedgerChangeType(StrEnum):
     ADDITION = "addition"
     SUBTRACTION = "subtraction"
     ADJUSTMENT = "adjustment"
+    # LEGACY_* mirrors of the three types above, for entries that predate a
+    # run-rate reset point - crud.compute_run_rates ignores them since they
+    # aren't ADDITION/SUBTRACTION. Never written by the API, only ever set
+    # via a one-off backfill (reversible: strip the "legacy_" prefix).
+    LEGACY_ADDITION = "legacy_addition"
+    LEGACY_SUBTRACTION = "legacy_subtraction"
+    LEGACY_ADJUSTMENT = "legacy_adjustment"
 
 
 # Shared properties
@@ -197,6 +205,11 @@ class InventoryItemPublic(InventoryItemBase):
     id: uuid.UUID
     created_at_ms: int
     last_updated_ms: int
+    # Computed from ledger history, not stored columns - see
+    # crud.compute_run_rates. Callers that don't compute them (create/update/
+    # bulk-adjust) fall back to these defaults rather than a stale number.
+    run_rate_per_month: float = 0.0
+    months_remaining: float | None = None
 
 
 class InventoryItemsPublic(SQLModel):
@@ -304,11 +317,233 @@ class CuppingPublic(CuppingBase):
     id: uuid.UUID
     date: int
     who_tasted: str
+    # Computed when manual_name is blank - see crud.resolve_cupping_names.
+    # Not a stored column, so create/update responses fall back to None
+    # until the route explicitly resolves it.
+    resolved_name: str | None = None
 
 
 class CuppingsPublic(SQLModel):
     data: list[CuppingPublic]
     count: int
+
+
+# ---------------------------------------------------------------------------
+# Tables mirrored 1:1 from the external Retool "coffee ops" Postgres database
+# (structure only, no data). Column names/types/nullability and the native
+# Postgres enum types match the source exactly, including its integer serial
+# ids and timestamptz columns, so a future data-sync job can map rows across
+# without translation. Not yet wired into any CRUD/API surface.
+# ---------------------------------------------------------------------------
+
+
+def _enum_values(enum_cls: type[StrEnum]) -> list[str]:
+    return [member.value for member in enum_cls]
+
+
+class RetoolSiteEnum(StrEnum):
+    WHOLESALE = "wholesale"
+    RETAIL = "retail"
+
+
+class RetoolOrderSiteEnum(StrEnum):
+    RETAIL = "retail"
+    WHOLESALE = "wholesale"
+
+
+class RetoolExpressionType(StrEnum):
+    FRUIT_FORWARD = "fruit_forward"
+    EXPLORATORY = "exploratory"
+    NOVA = "nova"
+    COCOA = "cocoa"
+
+
+class RetoolLocation(StrEnum):
+    SARATOGA_HQ = "saratoga_hq"
+
+
+class RetoolSelectionType(StrEnum):
+    MEDIUM_SPRO = "medium_spro"
+    LIGHT_SPRO = "light_spro"
+    DARK_SPRO = "dark_spro"
+    DECAF_SPRO = "decaf_spro"
+    SLOWBAR_1 = "slowbar_1"
+    SLOWBAR_2 = "slowbar_2"
+    SLOWBAR_3 = "slowbar_3"
+    SLOWBAR_4 = "slowbar_4"
+    SLOWBAR_5 = "slowbar_5"
+    SLOWBAR_SPRO_1 = "slowbar_spro_1"
+    SLOWBAR_SPRO_2 = "slowbar_spro_2"
+
+
+class RetoolRoastingMachine(StrEnum):
+    HQ_LORING_S7 = "hq_loring_s7"
+    HQ_ROEST_SAGVAG = "hq_roest_sagvag"
+
+
+class RetoolRef(StrEnum):
+    TRUE = "true"
+    FALSE = "false"
+
+
+class RetoolCoffeeSyncStrategy(SQLModel, table=True):
+    __tablename__ = "coffee_sync_strategies"
+
+    id: int | None = Field(default=None, primary_key=True)
+    date_added: datetime | None = Field(default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
+    name: str | None = Field(default=None, sa_type=Text)
+    bag_size_grams: int | None = Field(default=0)
+    percentage_sku_mix: int | None = Field(default=0)
+    percentage_site_mix: int | None = Field(default=0)
+    site: RetoolSiteEnum | None = Field(
+        default=None,
+        sa_type=PgEnum(RetoolSiteEnum, name="site_enum_8f28344e", values_callable=_enum_values),
+    )
+
+
+class RetoolCoffeeSyncStaging(SQLModel, table=True):
+    __tablename__ = "coffee_sync_staging"
+
+    id: int | None = Field(default=None, primary_key=True)
+    coffees_id: int | None = Field(default=0, unique=True)
+    current_assigned_inventory_grams: int | None = Field(default=0)
+    physical_inventory_grams: int | None = Field(default=0)
+    future_assigned_inventory_grams: int | None = Field(default=0)
+    available_inventory_grams: int | None = Field(default=0)
+    calculation_date: datetime | None = Field(default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
+    coffee_sync_strategies_name: str | None = Field(default=None, sa_type=Text)
+    suggested_retail_variant_qtys: str | None = Field(default=None, sa_type=Text)
+    suggested_wholesale_variant_qtys: str | None = Field(default=None, sa_type=Text)
+
+
+class RetoolCoffee(SQLModel, table=True):
+    __tablename__ = "coffees"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str | None = Field(default=None, sa_type=Text)
+    initial_grams: int | None = Field(default=0)
+    entered_date: datetime | None = Field(default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
+    remaining_grams: int | None = Field(default=0)
+    expression_type: RetoolExpressionType | None = Field(
+        default=RetoolExpressionType.FRUIT_FORWARD,
+        sa_type=PgEnum(RetoolExpressionType, name="expression_type_enum_4431a693", values_callable=_enum_values),
+    )
+    shopify_product_id: int | None = Field(default=0, sa_type=BigInteger)
+    shopify_wholesale_product_id: int | None = Field(default=0, sa_type=BigInteger)
+    farm: str = Field(default="", sa_type=Text)
+    country: str | None = Field(default=None, sa_type=Text)
+    varietal: str | None = Field(default=None, sa_type=Text)
+    process: str | None = Field(default=None, sa_type=Text)
+    producer_name: str = Field(default="", sa_type=Text)
+    archived: bool | None = Field(default=False)
+    weigh_in_entered_date: datetime | None = Field(default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
+    moisture_content: float | None = Field(default=0, sa_type=Float)
+    density: int | None = Field(default=0)
+    reading_temperature: int | None = Field(default=0)
+    moisture_reading_date: datetime | None = Field(
+        default_factory=get_datetime_utc, sa_type=DateTime(timezone=True)
+    )
+    coffee_sync_strategies_name: str | None = Field(default="disable_sync", sa_type=Text)
+    importer_exporter: str | None = Field(default=None, sa_type=Text)
+    menu_label_process_varietal: str | None = Field(default=None, sa_type=Text)
+    menu_label_producer: str | None = Field(default=None, sa_type=Text)
+    flavor_notes: str | None = Field(default=None, sa_type=Text)
+    expose_to_public: bool | None = Field(default=False)
+    pourover_price: float | None = Field(default=0, sa_type=Numeric(15, 2))
+    espresso_price: float | None = Field(default=0, sa_type=Numeric(15, 2))
+    bag_price: float | None = Field(default=0, sa_type=Numeric(15, 2))
+    bag_size_grams: int | None = Field(default=0)
+    color: str | None = Field(default=None, sa_type=Text)
+
+
+class RetoolMenu(SQLModel, table=True):
+    __tablename__ = "menu"
+
+    id: int | None = Field(default=None, primary_key=True)
+    last_updated_at: datetime | None = Field(default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
+    location: RetoolLocation | None = Field(
+        default=None,
+        sa_type=PgEnum(RetoolLocation, name="location_enum_71456e49", values_callable=_enum_values),
+    )
+    coffee_id: int | None = Field(default=0)
+    selection_type: RetoolSelectionType | None = Field(
+        default=None,
+        sa_type=PgEnum(RetoolSelectionType, name="selection_type_enum_254ac732", values_callable=_enum_values),
+    )
+
+
+class RetoolRoast(SQLModel, table=True):
+    __tablename__ = "roasts"
+
+    id: int | None = Field(default=None, primary_key=True)
+    coffees_id: int = Field(default=0)
+    grams_in: int | None = Field(default=0)
+    roasted_grams_out: int | None = Field(default=0)
+    post_sorted_grams: int | None = Field(default=0)
+    charge_temp: int | None = Field(default=0)
+    notes: str | None = Field(default=None, sa_type=Text)
+    alternative_id: int | None = Field(default=0)
+    roasting_machine: RetoolRoastingMachine = Field(
+        default=RetoolRoastingMachine.HQ_LORING_S7,
+        sa_type=PgEnum(RetoolRoastingMachine, name="roasting_machine_enum_55e00385", values_callable=_enum_values),
+    )
+    roast_date: datetime | None = Field(default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
+    ref: RetoolRef | None = Field(
+        default=None,
+        sa_type=PgEnum(RetoolRef, name="ref_enum_49300998", values_callable=_enum_values),
+    )
+
+
+class RetoolRoestEtl(SQLModel, table=True):
+    __tablename__ = "roest_etl"
+
+    id: int | None = Field(default=None, primary_key=True)
+    batch_no: int | None = Field(default=0)
+    roast_id: int | None = Field(default=0)
+    bean_name: str | None = Field(default=None, sa_type=Text)
+    start_timestamp: datetime | None = Field(default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
+    start_weight: int | None = Field(default=0)
+    machine_name: str | None = Field(default=None, sa_type=Text)
+    end_weight: float | None = Field(default=0, sa_type=Float)
+    drop_timestamp: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
+    firstcrack_timestamp: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
+
+
+class RetoolShopifyOrderInventory(SQLModel, table=True):
+    __tablename__ = "shopify_orders_inventory"
+
+    id: int | None = Field(default=None, primary_key=True)
+    product_name: str | None = Field(default=None, sa_type=Text)
+    product_id: int | None = Field(default=0, sa_type=BigInteger)
+    variant_name: str | None = Field(default=None, sa_type=Text)
+    variant_id: int | None = Field(default=0, sa_type=BigInteger)
+    unfulfilled_ordered_qty: int | None = Field(default=0)
+    inventory_qty: int | None = Field(default=0)
+    parsed_weight_grams: int | None = Field(default=0)
+    date_added: datetime | None = Field(default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
+    site: RetoolOrderSiteEnum | None = Field(
+        default=None,
+        sa_type=PgEnum(RetoolOrderSiteEnum, name="site_enum_599cef2b", values_callable=_enum_values),
+    )
+    generated_sku: str | None = Field(default=None, sa_type=Text, unique=True)
+    order_qty_falling_inside_cutoff: int | None = Field(default=0)
+
+
+class RetoolShopifySubscriptionOrder(SQLModel, table=True):
+    __tablename__ = "shopify_subscription_orders"
+
+    id: int | None = Field(default=None, primary_key=True)
+    customer_id: str | None = Field(default=None, sa_type=Text)
+    customer_email: str | None = Field(default=None, sa_type=Text)
+    subscription_type: str | None = Field(default=None, sa_type=Text)
+    order_date: datetime | None = Field(default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
+    assigned_coffees_id: int | None = Field(default=0)
+    order_id: str | None = Field(default=None, sa_type=Text)
+    order_name: str | None = Field(default=None, sa_type=Text)
+    order_falling_inside_cutoff: bool | None = Field(default=None)
+    unique_generated_index: str | None = Field(default=None, sa_type=Text, unique=True)
+    qty_id: int | None = Field(default=1)
+    date_inserted: datetime | None = Field(default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
 
 
 # Generic message

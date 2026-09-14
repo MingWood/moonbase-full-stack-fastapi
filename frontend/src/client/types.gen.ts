@@ -137,6 +137,10 @@ export type CuppingPublic = {
      * Who Tasted
      */
     who_tasted: string;
+    /**
+     * Resolved Name
+     */
+    resolved_name?: string | null;
 };
 
 /**
@@ -323,6 +327,14 @@ export type InventoryItemPublic = {
      * Last Updated Ms
      */
     last_updated_ms: number;
+    /**
+     * Run Rate Per Month
+     */
+    run_rate_per_month?: number;
+    /**
+     * Months Remaining
+     */
+    months_remaining?: number | null;
 };
 
 /**

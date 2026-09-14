@@ -22,6 +22,21 @@ router = APIRouter(
 )
 
 
+def _with_run_rate(item: InventoryItem, run_rate: float) -> InventoryItemPublic:
+    months_remaining = (
+        float(item.current_qty) / -run_rate if run_rate < 0 else None
+    )
+    return InventoryItemPublic.model_validate(
+        item,
+        update={
+            "run_rate_per_month": round(run_rate, 2),
+            "months_remaining": round(months_remaining, 2)
+            if months_remaining is not None
+            else None,
+        },
+    )
+
+
 @router.get("/", response_model=InventoryItemsPublic)
 def read_inventory_items(
     session: SessionDep, q: str | None = None, skip: int = 0, limit: int = 100
@@ -41,7 +56,11 @@ def read_inventory_items(
         statement.order_by(col(InventoryItem.name)).offset(skip).limit(limit)
     )
     items = session.exec(statement).all()
-    return InventoryItemsPublic(data=items, count=count)
+    run_rates = crud.compute_run_rates(
+        session=session, item_ids=[item.id for item in items]
+    )
+    data = [_with_run_rate(item, run_rates.get(item.id, 0.0)) for item in items]
+    return InventoryItemsPublic(data=data, count=count)
 
 
 @router.get("/{id}", response_model=InventoryItemPublic)
@@ -52,7 +71,8 @@ def read_inventory_item(session: SessionDep, id: uuid.UUID) -> Any:
     item = session.get(InventoryItem, id)
     if not item:
         raise HTTPException(status_code=404, detail="Inventory item not found")
-    return item
+    run_rates = crud.compute_run_rates(session=session, item_ids=[item.id])
+    return _with_run_rate(item, run_rates.get(item.id, 0.0))
 
 
 @router.post("/", response_model=InventoryItemPublic)

@@ -14,3 +14,14 @@ export const BREW_STYLE_OPTIONS: { value: BrewStyle; label: string }[] = [
   { value: "cupping", label: "Cupping" },
   { value: "spro", label: "Spro" },
 ]
+
+export function roastingMachinePrefix(machine: RoastingMachine): string {
+  switch (machine) {
+    case "hq_loring":
+      return "L"
+    case "sagvag":
+      return "S"
+    default:
+      return "N"
+  }
+}
