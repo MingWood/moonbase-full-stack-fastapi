@@ -135,6 +135,16 @@ export const NotesEditor = forwardRef<
         setIsEmpty(text.length === 0)
         onChange(text)
       }}
+      onFocus={(e) => {
+        // On mobile, the keyboard covers the bottom of the dialog and
+        // notes sits last in the form - nudge it into view once the
+        // keyboard has finished animating in, instead of leaving it
+        // hidden until the user manually scrolls.
+        const target = e.currentTarget
+        setTimeout(() => {
+          target.scrollIntoView({ block: "center", behavior: "smooth" })
+        }, 300)
+      }}
       className={cn(
         "border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 min-h-32 w-full rounded-md border bg-transparent px-3 py-2 text-base whitespace-pre-wrap break-words shadow-xs outline-none transition-[color,box-shadow,min-height] duration-200 focus-visible:ring-[3px] focus:min-h-48 caret-primary md:text-sm",
         isEmpty &&

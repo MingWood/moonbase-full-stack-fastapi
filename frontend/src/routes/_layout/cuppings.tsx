@@ -24,8 +24,8 @@ import { formatEpochMsDate } from "@/lib/datetime"
 import { substringMatchAny } from "@/lib/fuzzy"
 
 const SCOPE_OPTIONS: { value: "all" | "mine"; label: string }[] = [
-  { value: "all", label: "Show All" },
-  { value: "mine", label: "Show Me" },
+  { value: "all", label: "Show\nAll" },
+  { value: "mine", label: "Show\nMe" },
 ]
 
 function cuppingSearchableFields(cupping: CuppingPublic): string[] {
@@ -169,8 +169,15 @@ function CuppingsListContent({
   )
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
 function CuppingsPage() {
-  const [range, setRange] = useState<DateRange>({ start: null, end: null })
+  // Defaults to the last 24 hours rather than all time - the DateRangeFilter
+  // popover has an "All time" preset for clearing it.
+  const [range, setRange] = useState<DateRange>(() => ({
+    start: Date.now() - DAY_MS,
+    end: Date.now(),
+  }))
   const [search, setSearch] = useState("")
   const [scope, setScope] = useState<"all" | "mine">("mine")
   const [modalTarget, setModalTarget] = useState<CuppingPublic | "new" | null>(
@@ -200,7 +207,7 @@ function CuppingsPage() {
         </div>
         <div className="flex items-center justify-between gap-3">
           <DateRangeFilter value={range} onChange={setRange} />
-          <div className="w-44 shrink-0">
+          <div className="shrink-0">
             <SegmentedToggle
               options={SCOPE_OPTIONS}
               value={scope}
@@ -226,6 +233,8 @@ function CuppingsPage() {
         }}
         cupping={modalTarget && modalTarget !== "new" ? modalTarget : undefined}
         defaultOrderId={nextOrderId}
+        defaultRoastingMachine={lastCupping?.roasting_machine}
+        defaultBrewStyle={lastCupping?.brew_style}
       />
     </div>
   )

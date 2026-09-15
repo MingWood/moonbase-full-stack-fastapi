@@ -9,14 +9,12 @@ import {
 import type { SankeyGraphLink, SankeyGraphNode } from "./buildSankeyGraph"
 
 const WIDTH = 720
-const HEIGHT = 158
+const HEIGHT = 209
 const NODE_WIDTH = 10
 const NODE_PADDING = 10
-// Below this rendered height, a node's slice is too thin for its direct
-// label to clear its neighbors without overlapping - per the dataviz
-// skill's overflow rule, drop the label rather than let it collide, and
-// let the (still-present) hover tooltip carry the value instead.
-const MIN_LABEL_NODE_HEIGHT = 13
+// Minimum vertical gap between two labels' baselines in the same column -
+// enough for one line of the 10px label text not to clip its neighbor.
+const LABEL_LINE_HEIGHT = 11
 
 // Ordinal ramp for bag-size tiers: each step mixes the site's categorical
 // color toward the chart surface, smallest bag = full color, largest =
@@ -42,6 +40,40 @@ function nodeFill(node: SankeyGraphNode): string {
 }
 
 type LayoutNode = SankeyNode<SankeyGraphNode, SankeyGraphLink>
+
+/**
+ * Every node keeps a visible label, however thin its slice - instead of
+ * hiding labels that don't fit, nudge them apart vertically so they never
+ * overlap. Nodes are grouped by column + site (so a full site's labels can
+ * only ever push against each other, never bleed into the other site's
+ * territory - which is also kept crossing-free by nodeSort), then walked
+ * top-to-bottom enforcing a minimum gap from the previous label.
+ */
+function declutterLabelPositions(nodes: LayoutNode[]): Map<string, number> {
+  const positions = new Map<string, number>()
+  const groups = new Map<string, LayoutNode[]>()
+  for (const node of nodes) {
+    if (node.kind === "name") continue
+    const key = `${node.depth ?? 0}:${node.site ?? "x"}`
+    if (!groups.has(key)) groups.set(key, [])
+    // biome-ignore lint/style/noNonNullAssertion: just set above if missing
+    groups.get(key)!.push(node)
+  }
+  for (const group of groups.values()) {
+    const sorted = [...group].sort(
+      (a, b) =>
+        ((a.y0 ?? 0) + (a.y1 ?? 0)) / 2 - ((b.y0 ?? 0) + (b.y1 ?? 0)) / 2,
+    )
+    let prevY = Number.NEGATIVE_INFINITY
+    for (const node of sorted) {
+      const center = ((node.y0 ?? 0) + (node.y1 ?? 0)) / 2
+      const y = Math.max(center, prevY + LABEL_LINE_HEIGHT)
+      positions.set(node.id, y)
+      prevY = y
+    }
+  }
+  return positions
+}
 
 export function SankeyDiagram({
   nodes,
@@ -69,6 +101,11 @@ export function SankeyDiagram({
       links: links.map((d) => ({ ...d })),
     })
   }, [nodes, links])
+
+  const labelPositions = useMemo(
+    () => declutterLabelPositions(layout.nodes as LayoutNode[]),
+    [layout],
+  )
 
   const linkPath = sankeyLinkHorizontal<SankeyGraphNode, SankeyGraphLink>()
 
@@ -117,9 +154,15 @@ export function SankeyDiagram({
           const x1 = node.x1 ?? 0
           const y0 = node.y0 ?? 0
           const y1 = node.y1 ?? 0
+          const center = (y0 + y1) / 2
           const labelOnRight = x0 < WIDTH / 2
-          const showLabel =
-            node.kind !== "name" && y1 - y0 >= MIN_LABEL_NODE_HEIGHT
+          const showLabel = node.kind !== "name"
+          const labelY = labelPositions.get(node.id) ?? center
+          // When decluttering has nudged the label away from its node's
+          // actual center, a short leader line keeps the two connected.
+          const displaced = Math.abs(labelY - center) > 1
+          const edgeX = labelOnRight ? x1 : x0
+          const labelStartX = labelOnRight ? x1 + 6 : x0 - 6
           return (
             <Tooltip key={node.id}>
               <TooltipTrigger asChild>
@@ -132,10 +175,21 @@ export function SankeyDiagram({
                     rx={2}
                     fill={nodeFill(node)}
                   />
+                  {showLabel && displaced && (
+                    <line
+                      x1={edgeX}
+                      y1={center}
+                      x2={labelStartX}
+                      y2={labelY}
+                      className="stroke-muted-foreground"
+                      strokeWidth={0.75}
+                      strokeOpacity={0.5}
+                    />
+                  )}
                   {showLabel && (
                     <text
-                      x={labelOnRight ? x1 + 6 : x0 - 6}
-                      y={(y0 + y1) / 2}
+                      x={labelStartX}
+                      y={labelY}
                       dy="0.32em"
                       textAnchor={labelOnRight ? "start" : "end"}
                       className="fill-foreground text-[10px]"

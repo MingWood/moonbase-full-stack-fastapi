@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
 
+import type { BrewStyle, RoastingMachine } from "@/client"
 import { type CuppingPublic, CuppingsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
@@ -166,11 +167,16 @@ export function CuppingFormModal({
   onOpenChange,
   cupping,
   defaultOrderId = 0,
+  defaultRoastingMachine,
+  defaultBrewStyle,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   cupping?: CuppingPublic | null
   defaultOrderId?: number
+  /** Roasting machine/brew style of the most recent cupping, pre-filled for a new entry - most cupping sessions stick with one. */
+  defaultRoastingMachine?: RoastingMachine
+  defaultBrewStyle?: BrewStyle
 }) {
   const isEdit = !!cupping
   const queryClient = useQueryClient()
@@ -199,13 +205,19 @@ export function CuppingFormModal({
     if (open) {
       const values = cupping
         ? toFormValues(cupping)
-        : { ...emptyDefaults, order_id: defaultOrderId }
+        : {
+            ...emptyDefaults,
+            order_id: defaultOrderId,
+            roasting_machine:
+              defaultRoastingMachine ?? emptyDefaults.roasting_machine,
+            brew_style: defaultBrewStyle ?? emptyDefaults.brew_style,
+          }
       notesBaselineRef.current = values.notes ?? ""
       form.reset(values)
       notesEditorRef.current?.setDisplayValue(values.notes ?? "")
       setCompact(!!cupping)
     }
-  }, [open, cupping, defaultOrderId])
+  }, [open, cupping, defaultOrderId, defaultRoastingMachine, defaultBrewStyle])
 
   const mutation = useMutation({
     mutationFn: (data: FormOutput) =>
@@ -291,7 +303,7 @@ export function CuppingFormModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col gap-0 p-0 max-h-[90vh] sm:max-w-xl">
+      <DialogContent className="flex flex-col gap-0 p-0 max-h-[90dvh] sm:max-w-xl">
         <DialogHeader className="sticky top-0 z-10 bg-background border-b px-6 py-4 gap-1.5">
           {displayName && (
             <div className="text-sm font-semibold leading-snug break-words">

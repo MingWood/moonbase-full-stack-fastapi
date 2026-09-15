@@ -75,7 +75,7 @@ export function DateRangeFilter({
     setOpen(false)
   }
 
-  const clear = () => {
+  const selectAllTime = () => {
     onChange({ start: null, end: null })
     setOpen(false)
   }
@@ -85,7 +85,7 @@ export function DateRangeFilter({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="h-11 max-w-56 sm:max-w-xs justify-start gap-2 font-normal"
+          className="h-11 min-w-0 flex-1 max-w-56 sm:max-w-xs justify-start gap-2 font-normal"
         >
           <CalendarRange className="size-4 shrink-0" />
           <span className="truncate">{label}</span>
@@ -122,8 +122,8 @@ export function DateRangeFilter({
           </div>
         </div>
         <div className="flex justify-end gap-2 border-t px-4 py-3">
-          <Button variant="outline" onClick={clear}>
-            Clear
+          <Button variant="outline" onClick={selectAllTime}>
+            All time
           </Button>
           <Button onClick={apply}>Apply</Button>
         </div>

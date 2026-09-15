@@ -17,7 +17,9 @@ export function SegmentedToggle<T extends string>({
           key={opt.value}
           type="button"
           variant={value === opt.value ? "default" : "outline"}
-          className={cn("flex-1 h-11")}
+          className={cn(
+            "flex-1 h-11 whitespace-pre-line text-center leading-tight",
+          )}
           onClick={() => onChange(opt.value)}
         >
           {opt.label}
