@@ -157,7 +157,11 @@ function CuppingsListContent({
             {showSeparator && (
               <DateSeparator label={formatEpochMsDate(cupping.date)} />
             )}
-            <CuppingRow cupping={cupping} onClick={() => onEdit(cupping)} />
+            <CuppingRow
+              cupping={cupping}
+              onClick={() => onEdit(cupping)}
+              currentUserIdentity={currentUserIdentity}
+            />
           </Fragment>
         )
       })}
@@ -168,7 +172,7 @@ function CuppingsListContent({
 function CuppingsPage() {
   const [range, setRange] = useState<DateRange>({ start: null, end: null })
   const [search, setSearch] = useState("")
-  const [scope, setScope] = useState<"all" | "mine">("all")
+  const [scope, setScope] = useState<"all" | "mine">("mine")
   const [modalTarget, setModalTarget] = useState<CuppingPublic | "new" | null>(
     null,
   )

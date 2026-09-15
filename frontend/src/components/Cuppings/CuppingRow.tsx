@@ -27,9 +27,11 @@ function QScoreCell({ value }: { value: number }) {
 export function CuppingRow({
   cupping,
   onClick,
+  currentUserIdentity,
 }: {
   cupping: CuppingPublic
   onClick: () => void
+  currentUserIdentity?: string | null
 }) {
   const qScore = calculateQScore(
     cupping.fragrance_score,
@@ -37,6 +39,7 @@ export function CuppingRow({
     cupping.taste_score,
     cupping.aftertaste_score,
   )
+  const isOwnEntry = cupping.who_tasted === currentUserIdentity
 
   return (
     <button
@@ -54,9 +57,16 @@ export function CuppingRow({
       </div>
 
       <div className="flex flex-col justify-center px-2 py-1.5 flex-1 min-w-0">
-        <span className="text-sm font-medium truncate leading-tight">
-          {roastingMachinePrefix(cupping.roasting_machine)}
-          {cupping.roast_id}
+        <span className="flex items-baseline gap-1 text-sm font-medium leading-tight min-w-0">
+          <span className="truncate">
+            {roastingMachinePrefix(cupping.roasting_machine)}
+            {cupping.roast_id}
+          </span>
+          {!isOwnEntry && (
+            <span className="text-[10px] font-normal text-muted-foreground truncate">
+              {cupping.who_tasted}
+            </span>
+          )}
         </span>
         <span className="text-xs text-muted-foreground truncate leading-tight">
           {cupping.manual_name || cupping.resolved_name}

@@ -1,4 +1,4 @@
-import { ListPlus, Package, Star } from "lucide-react"
+import { ListPlus, Package, Star, Workflow } from "lucide-react"
 
 import { SidebarAppearance } from "@/components/Common/Appearance"
 import { Logo } from "@/components/Common/Logo"
@@ -16,6 +16,11 @@ const items: Item[] = [
   { icon: Package, title: "Full Inventory", path: "/" },
   { icon: ListPlus, title: "Inventory Update", path: "/inventory-update" },
   { icon: Star, title: "Cuppings", path: "/cuppings" },
+  {
+    icon: Workflow,
+    title: "Coffee Sync Strategies",
+    path: "/coffee-sync-strategies",
+  },
 ]
 
 export function AppSidebar() {

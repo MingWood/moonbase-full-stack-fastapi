@@ -2,7 +2,7 @@
 
 import { type Client, type Options as Options2, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { cuppingsCreateCuppingData, cuppingsCreateCuppingErrors, cuppingsCreateCuppingResponses, cuppingsReadCuppingData, cuppingsReadCuppingErrors, cuppingsReadCuppingResponses, cuppingsReadCuppingsData, cuppingsReadCuppingsErrors, cuppingsReadCuppingsResponses, cuppingsUpdateCuppingData, cuppingsUpdateCuppingErrors, cuppingsUpdateCuppingResponses, inventoryBulkAdjustInventoryData, inventoryBulkAdjustInventoryErrors, inventoryBulkAdjustInventoryResponses, inventoryCreateInventoryItemData, inventoryCreateInventoryItemErrors, inventoryCreateInventoryItemResponses, inventoryDeleteInventoryItemData, inventoryDeleteInventoryItemErrors, inventoryDeleteInventoryItemResponses, inventoryReadInventoryItemData, inventoryReadInventoryItemErrors, inventoryReadInventoryItemResponses, inventoryReadInventoryItemsData, inventoryReadInventoryItemsErrors, inventoryReadInventoryItemsResponses, inventoryUpdateInventoryItemData, inventoryUpdateInventoryItemErrors, inventoryUpdateInventoryItemResponses, itemsCreateItemData, itemsCreateItemErrors, itemsCreateItemResponses, itemsDeleteItemData, itemsDeleteItemErrors, itemsDeleteItemResponses, itemsReadItemData, itemsReadItemErrors, itemsReadItemResponses, itemsReadItemsData, itemsReadItemsErrors, itemsReadItemsResponses, itemsUpdateItemData, itemsUpdateItemErrors, itemsUpdateItemResponses, loginLoginAccessTokenData, loginLoginAccessTokenErrors, loginLoginAccessTokenResponses, loginRecoverPasswordData, loginRecoverPasswordErrors, loginRecoverPasswordHtmlContentData, loginRecoverPasswordHtmlContentErrors, loginRecoverPasswordHtmlContentResponses, loginRecoverPasswordResponses, loginResetPasswordData, loginResetPasswordErrors, loginResetPasswordResponses, loginTestTokenData, loginTestTokenResponses, privateCreateUserData, privateCreateUserErrors, privateCreateUserResponses, usersCreateUserData, usersCreateUserErrors, usersCreateUserResponses, usersDeleteUserData, usersDeleteUserErrors, usersDeleteUserMeData, usersDeleteUserMeResponses, usersDeleteUserResponses, usersReadUserByIdData, usersReadUserByIdErrors, usersReadUserByIdResponses, usersReadUserMeData, usersReadUserMeResponses, usersReadUsersData, usersReadUsersErrors, usersReadUsersResponses, usersRegisterUserData, usersRegisterUserErrors, usersRegisterUserResponses, usersUpdatePasswordMeData, usersUpdatePasswordMeErrors, usersUpdatePasswordMeResponses, usersUpdateUserData, usersUpdateUserErrors, usersUpdateUserMeData, usersUpdateUserMeErrors, usersUpdateUserMeResponses, usersUpdateUserResponses, utilsHealthCheckData, utilsHealthCheckResponses, utilsTestEmailData, utilsTestEmailErrors, utilsTestEmailResponses } from './types.gen';
+import type { cuppingsCreateCuppingData, cuppingsCreateCuppingErrors, cuppingsCreateCuppingResponses, cuppingsReadCuppingData, cuppingsReadCuppingErrors, cuppingsReadCuppingResponses, cuppingsReadCuppingsData, cuppingsReadCuppingsErrors, cuppingsReadCuppingsResponses, cuppingsUpdateCuppingData, cuppingsUpdateCuppingErrors, cuppingsUpdateCuppingResponses, inventoryBulkAdjustInventoryData, inventoryBulkAdjustInventoryErrors, inventoryBulkAdjustInventoryResponses, inventoryCreateInventoryItemData, inventoryCreateInventoryItemErrors, inventoryCreateInventoryItemResponses, inventoryDeleteInventoryItemData, inventoryDeleteInventoryItemErrors, inventoryDeleteInventoryItemResponses, inventoryReadInventoryItemData, inventoryReadInventoryItemErrors, inventoryReadInventoryItemResponses, inventoryReadInventoryItemsData, inventoryReadInventoryItemsErrors, inventoryReadInventoryItemsResponses, inventoryUpdateInventoryItemData, inventoryUpdateInventoryItemErrors, inventoryUpdateInventoryItemResponses, itemsCreateItemData, itemsCreateItemErrors, itemsCreateItemResponses, itemsDeleteItemData, itemsDeleteItemErrors, itemsDeleteItemResponses, itemsReadItemData, itemsReadItemErrors, itemsReadItemResponses, itemsReadItemsData, itemsReadItemsErrors, itemsReadItemsResponses, itemsUpdateItemData, itemsUpdateItemErrors, itemsUpdateItemResponses, loginLoginAccessTokenData, loginLoginAccessTokenErrors, loginLoginAccessTokenResponses, loginRecoverPasswordData, loginRecoverPasswordErrors, loginRecoverPasswordHtmlContentData, loginRecoverPasswordHtmlContentErrors, loginRecoverPasswordHtmlContentResponses, loginRecoverPasswordResponses, loginResetPasswordData, loginResetPasswordErrors, loginResetPasswordResponses, loginTestTokenData, loginTestTokenResponses, privateCreateUserData, privateCreateUserErrors, privateCreateUserResponses, readCoffeeSyncStrategiesData, readCoffeeSyncStrategiesResponses, usersCreateUserData, usersCreateUserErrors, usersCreateUserResponses, usersDeleteUserData, usersDeleteUserErrors, usersDeleteUserMeData, usersDeleteUserMeResponses, usersDeleteUserResponses, usersReadUserByIdData, usersReadUserByIdErrors, usersReadUserByIdResponses, usersReadUserMeData, usersReadUserMeResponses, usersReadUsersData, usersReadUsersErrors, usersReadUsersResponses, usersRegisterUserData, usersRegisterUserErrors, usersRegisterUserResponses, usersUpdatePasswordMeData, usersUpdatePasswordMeErrors, usersUpdatePasswordMeResponses, usersUpdateUserData, usersUpdateUserErrors, usersUpdateUserMeData, usersUpdateUserMeErrors, usersUpdateUserMeResponses, usersUpdateUserResponses, utilsHealthCheckData, utilsHealthCheckResponses, utilsTestEmailData, utilsTestEmailErrors, utilsTestEmailResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -532,6 +532,24 @@ export class CuppingsService {
                 'Content-Type': 'application/json',
                 ...options.headers
             }
+        });
+    }
+}
+
+export class CoffeeSyncStrategiesService {
+    /**
+     * Read Coffee Sync Strategies
+     *
+     * Retrieve every coffee sync strategy row. This table is a one-time,
+     * read-only copy from Retool (not a live sync), so it's always loaded in
+     * full - there's no pagination or filtering to build against yet.
+     */
+    public static readCoffeeSyncStrategies<ThrowOnError extends boolean = true>(options?: Options<readCoffeeSyncStrategiesData, ThrowOnError>) {
+        return (options?.client ?? client).get<readCoffeeSyncStrategiesResponses, unknown, ThrowOnError>({
+            responseType: 'json',
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/v1/coffee-sync-strategies/',
+            ...options
         });
     }
 }

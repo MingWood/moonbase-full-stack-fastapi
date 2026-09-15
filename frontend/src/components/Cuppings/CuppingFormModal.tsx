@@ -284,39 +284,53 @@ export function CuppingFormModal({
     .filter(Boolean)
     .join(" · ")
 
+  // Manual name (as the user is actively editing it) wins, falling back to
+  // the server-resolved name from the roast lookup - same precedence as
+  // CuppingRow's list display.
+  const displayName = watchedManualName || cupping?.resolved_name
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex flex-col gap-0 p-0 max-h-[90vh] sm:max-w-xl">
-        <DialogHeader className="sticky top-0 z-10 bg-background border-b px-6 py-4 flex-row items-center justify-between gap-4 space-y-0">
-          <DialogTitle className={cn(isEdit && compact && "sr-only")}>
-            {isEdit ? "Edit Cupping" : "Add Cupping"}
-          </DialogTitle>
-          {isEdit && compact && (
-            <button
-              type="button"
-              onClick={() => setCompact(false)}
-              className="flex min-w-0 flex-1 items-center gap-2 text-left"
-            >
-              <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
-              <span className="wrap text-sm font-medium">{summaryText}</span>
-            </button>
-          )}
-          <div className="flex items-center gap-3 mr-6">
-            <div className="flex flex-col items-center px-3 py-1 rounded-md bg-red-100 dark:bg-red-950/50">
-              <span className="text-[10px] uppercase tracking-wide text-red-700/70 dark:text-red-300/70">
-                Q
-              </span>
-              <span className="font-semibold tabular-nums text-red-700 dark:text-red-300">
-                {qScore}
-              </span>
+        <DialogHeader className="sticky top-0 z-10 bg-background border-b px-6 py-4 gap-1.5">
+          {displayName && (
+            <div className="text-sm font-semibold leading-snug break-words">
+              {displayName}
             </div>
-            <LoadingButton
-              type="submit"
-              form="cupping-form"
-              loading={mutation.isPending}
-            >
-              {isEdit ? "Save" : "Submit"}
-            </LoadingButton>
+          )}
+          <div className="flex flex-row items-center justify-between gap-4">
+            <DialogTitle className={cn(isEdit && compact && "sr-only")}>
+              {isEdit ? "Edit Cupping" : "Add Cupping"}
+            </DialogTitle>
+            {isEdit && compact && (
+              <button
+                type="button"
+                onClick={() => setCompact(false)}
+                className="flex min-w-0 flex-1 items-center gap-2 text-left"
+              >
+                <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+                <span className="wrap text-sm font-medium">
+                  {summaryText}
+                </span>
+              </button>
+            )}
+            <div className="flex items-center gap-3 mr-6">
+              <div className="flex flex-col items-center px-3 py-1 rounded-md bg-red-100 dark:bg-red-950/50">
+                <span className="text-[10px] uppercase tracking-wide text-red-700/70 dark:text-red-300/70">
+                  Q
+                </span>
+                <span className="font-semibold tabular-nums text-red-700 dark:text-red-300">
+                  {qScore}
+                </span>
+              </div>
+              <LoadingButton
+                type="submit"
+                form="cupping-form"
+                loading={mutation.isPending}
+              >
+                {isEdit ? "Save" : "Submit"}
+              </LoadingButton>
+            </div>
           </div>
         </DialogHeader>
 

@@ -463,7 +463,7 @@ export type ItemsPublic = {
 /**
  * LedgerChangeType
  */
-export type LedgerChangeType = 'addition' | 'subtraction' | 'adjustment';
+export type LedgerChangeType = 'addition' | 'subtraction' | 'adjustment' | 'legacy_addition' | 'legacy_subtraction' | 'legacy_adjustment';
 
 /**
  * Message
@@ -510,6 +510,52 @@ export type PrivateUserCreate = {
      */
     is_verified?: boolean;
 };
+
+/**
+ * RetoolCoffeeSyncStrategiesPublic
+ */
+export type RetoolCoffeeSyncStrategiesPublic = {
+    /**
+     * Data
+     */
+    data: Array<RetoolCoffeeSyncStrategyPublic>;
+    /**
+     * Count
+     */
+    count: number;
+};
+
+/**
+ * RetoolCoffeeSyncStrategyPublic
+ */
+export type RetoolCoffeeSyncStrategyPublic = {
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Name
+     */
+    name: string | null;
+    site: RetoolSiteEnum | null;
+    /**
+     * Bag Size Grams
+     */
+    bag_size_grams: number | null;
+    /**
+     * Percentage Sku Mix
+     */
+    percentage_sku_mix: number | null;
+    /**
+     * Percentage Site Mix
+     */
+    percentage_site_mix: number | null;
+};
+
+/**
+ * RetoolSiteEnum
+ */
+export type RetoolSiteEnum = 'wholesale' | 'retail';
 
 /**
  * RoastingMachine
@@ -1583,6 +1629,22 @@ export type cuppingsUpdateCuppingResponses = {
 };
 
 export type cuppingsUpdateCuppingResponse = cuppingsUpdateCuppingResponses[keyof cuppingsUpdateCuppingResponses];
+
+export type readCoffeeSyncStrategiesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/coffee-sync-strategies/';
+};
+
+export type readCoffeeSyncStrategiesResponses = {
+    /**
+     * Successful Response
+     */
+    200: RetoolCoffeeSyncStrategiesPublic;
+};
+
+export type readCoffeeSyncStrategiesResponse = readCoffeeSyncStrategiesResponses[keyof readCoffeeSyncStrategiesResponses];
 
 export type privateCreateUserData = {
     body: PrivateUserCreate;

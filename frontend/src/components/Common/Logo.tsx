@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router"
 
 import { cn } from "@/lib/utils"
 import icon from "/assets/images/moonwake-icon.png"
-import logo from "/assets/images/moonwake-logo.png"
+import logo from "/assets/images/horilogo.svg"
 
 interface LogoProps {
   variant?: "full" | "icon" | "responsive"
@@ -22,7 +22,7 @@ export function Logo({
           src={logo}
           alt="Moonwake Coffee Roasters"
           className={cn(
-            "h-8 w-auto mx-auto group-data-[collapsible=icon]:hidden",
+            "h-16 w-auto mx-auto group-data-[collapsible=icon]:hidden",
             className,
           )}
         />

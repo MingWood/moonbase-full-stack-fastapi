@@ -401,6 +401,20 @@ class RetoolCoffeeSyncStrategy(SQLModel, table=True):
     )
 
 
+class RetoolCoffeeSyncStrategyPublic(SQLModel):
+    id: int
+    name: str | None
+    site: RetoolSiteEnum | None
+    bag_size_grams: int | None
+    percentage_sku_mix: int | None
+    percentage_site_mix: int | None
+
+
+class RetoolCoffeeSyncStrategiesPublic(SQLModel):
+    data: list[RetoolCoffeeSyncStrategyPublic]
+    count: int
+
+
 class RetoolCoffeeSyncStaging(SQLModel, table=True):
     __tablename__ = "coffee_sync_staging"
 

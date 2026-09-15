@@ -16,6 +16,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
+import { Route as LayoutCoffeeSyncStrategiesRouteImport } from './routes/_layout/coffee-sync-strategies'
 import { Route as LayoutCuppingsRouteImport } from './routes/_layout/cuppings'
 import { Route as LayoutInventoryUpdateRouteImport } from './routes/_layout/inventory-update'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
@@ -55,6 +56,12 @@ const LayoutAdminRoute = LayoutAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutCoffeeSyncStrategiesRoute =
+  LayoutCoffeeSyncStrategiesRouteImport.update({
+    id: '/coffee-sync-strategies',
+    path: '/coffee-sync-strategies',
+    getParentRoute: () => LayoutRoute,
+  } as any)
 const LayoutCuppingsRoute = LayoutCuppingsRouteImport.update({
   id: '/cuppings',
   path: '/cuppings',
@@ -83,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/coffee-sync-strategies': typeof LayoutCoffeeSyncStrategiesRoute
   '/cuppings': typeof LayoutCuppingsRoute
   '/inventory-update': typeof LayoutInventoryUpdateRoute
   '/items': typeof LayoutItemsRoute
@@ -94,6 +102,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/coffee-sync-strategies': typeof LayoutCoffeeSyncStrategiesRoute
   '/cuppings': typeof LayoutCuppingsRoute
   '/inventory-update': typeof LayoutInventoryUpdateRoute
   '/items': typeof LayoutItemsRoute
@@ -108,6 +117,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_layout/admin': typeof LayoutAdminRoute
+  '/_layout/coffee-sync-strategies': typeof LayoutCoffeeSyncStrategiesRoute
   '/_layout/cuppings': typeof LayoutCuppingsRoute
   '/_layout/inventory-update': typeof LayoutInventoryUpdateRoute
   '/_layout/items': typeof LayoutItemsRoute
@@ -123,6 +133,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/coffee-sync-strategies'
     | '/cuppings'
     | '/inventory-update'
     | '/items'
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/coffee-sync-strategies'
     | '/cuppings'
     | '/inventory-update'
     | '/items'
@@ -147,6 +159,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/_layout/admin'
+    | '/_layout/coffee-sync-strategies'
     | '/_layout/cuppings'
     | '/_layout/inventory-update'
     | '/_layout/items'
@@ -213,6 +226,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/coffee-sync-strategies': {
+      id: '/_layout/coffee-sync-strategies'
+      path: '/coffee-sync-strategies'
+      fullPath: '/coffee-sync-strategies'
+      preLoaderRoute: typeof LayoutCoffeeSyncStrategiesRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/cuppings': {
       id: '/_layout/cuppings'
       path: '/cuppings'
@@ -246,6 +266,7 @@ declare module '@tanstack/react-router' {
 
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
+  LayoutCoffeeSyncStrategiesRoute: typeof LayoutCoffeeSyncStrategiesRoute
   LayoutCuppingsRoute: typeof LayoutCuppingsRoute
   LayoutInventoryUpdateRoute: typeof LayoutInventoryUpdateRoute
   LayoutItemsRoute: typeof LayoutItemsRoute
@@ -255,6 +276,7 @@ interface LayoutRouteChildren {
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRoute,
+  LayoutCoffeeSyncStrategiesRoute: LayoutCoffeeSyncStrategiesRoute,
   LayoutCuppingsRoute: LayoutCuppingsRoute,
   LayoutInventoryUpdateRoute: LayoutInventoryUpdateRoute,
   LayoutItemsRoute: LayoutItemsRoute,
